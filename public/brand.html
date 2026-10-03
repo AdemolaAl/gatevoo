@@ -1,0 +1,118 @@
+<meta charset="utf-8">
+<title>Gatevoo Brand</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{--ink:#121110;--ink2:#2C2925;--bg:#FAF9F5;--sunk:#F3F1EB;--line:#EEEBE2;--muted:#5E5A50;--usdt:#26A17B;--btc:#F7931A;--ease:cubic-bezier(.16,1,.3,1);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C0B0A;--sunk:#161513;--line:#2C2925;--muted:#A9A398}}
+:root[data-theme="dark"]{--bg:#0C0B0A;--sunk:#161513;--line:#2C2925;--muted:#A9A398}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) body{color:#F4F2EE}}
+:root[data-theme="dark"] body{color:#F4F2EE}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 16px 80px}
+.eb{font:800 11px/1 inherit;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px}
+.eb::before{content:"";width:22px;height:2px;background:currentColor}
+h1{font-size:clamp(44px,8vw,96px);line-height:.95;letter-spacing:-.06em;font-weight:800;margin:18px 0 14px}
+h1 .it,h2 .it{color:#A8A396}
+h2{font-size:clamp(26px,4vw,40px);letter-spacing:-.05em;font-weight:800;margin:72px 0 8px}
+p.lead{max-width:560px;color:var(--muted);font-size:17px;line-height:1.55;margin:0}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;margin-top:36px}
+.stage{position:relative;border-radius:32px;background:#121110;min-height:420px;display:grid;place-items:center;overflow:hidden}
+.stage::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 70%,rgba(255,255,255,.10) 80%,transparent 90%);animation:spin 9s linear infinite}
+.stage::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 30%,#121110 70%)}
+@keyframes spin{to{transform:rotate(1turn)}}
+.big{position:relative;z-index:1;width:min(240px,55%);filter:drop-shadow(0 30px 60px rgba(0,0,0,.6))}
+.big .arc{stroke-dasharray:100;stroke-dashoffset:100;animation:draw 1.6s var(--ease) .2s forwards}
+.big .dot{transform-origin:32.4px 32px;transform:scale(0);animation:land .8s cubic-bezier(.2,1.6,.3,1) 1.5s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes land{0%{transform:scale(0)}55%{transform:scale(1.5);fill:var(--usdt)}100%{transform:scale(1)}}
+.replay{position:absolute;z-index:2;bottom:16px;right:16px;border:1px solid #2C2925;background:#1E1C19;color:#fff;border-radius:999px;padding:9px 16px;font:700 13px inherit;cursor:pointer}
+.side{display:grid;gap:24px}
+.tile{border-radius:28px;display:grid;place-items:center;min-height:198px;border:1px solid var(--line);position:relative;transition:transform .5s var(--ease)}
+.tile:hover{transform:translateY(-4px)}
+.tile.w{background:#fff}.tile.k{background:#121110;border-color:#121110}
+.tile img{height:46px}
+.tile small{position:absolute;left:18px;bottom:14px;font:700 11px inherit;letter-spacing:.1em;text-transform:uppercase;color:#948F82}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:22px}
+.dl{border:1px solid var(--line);border-radius:24px;padding:18px;display:grid;gap:14px;background:var(--sunk);transition:transform .4s var(--ease),border-color .3s}
+.dl:hover{transform:translateY(-3px);border-color:var(--muted)}
+.dl .pv{height:120px;border-radius:16px;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line)}
+.dl .pv.k{background:#121110;border-color:#121110}
+.dl .pv img{max-height:64px;max-width:80%}
+.dl b{font-size:14px;letter-spacing:-.02em}
+.dl a{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;background:#121110;color:#fff;text-decoration:none;border-radius:999px;padding:8px 8px 8px 16px;font:700 13px inherit}
+.dl a i{width:26px;height:26px;border-radius:50%;background:#fff;color:#121110;display:grid;place-items:center;font-style:normal;transition:transform .3s var(--ease)}
+.dl a:hover i{transform:rotate(-45deg)}
+.sw{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:22px}
+.c{border-radius:22px;height:160px;padding:16px;display:flex;flex-direction:column;justify-content:flex-end;border:1px solid var(--line);font-size:13px}
+.c b{font-size:15px;letter-spacing:-.02em}.c span{opacity:.7;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.type{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+.type div{border:1px solid var(--line);border-radius:24px;padding:28px}
+.type .a{font-size:64px;font-weight:800;letter-spacing:-.06em;line-height:1}
+.type .b{font-size:64px;font-weight:800;letter-spacing:-.06em;line-height:1}.type .b span{color:#A8A396}
+.type small{display:block;margin-top:14px;color:var(--muted)}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+.rules div{border:1px solid var(--line);border-radius:24px;padding:22px;line-height:1.5;color:var(--muted)}
+.rules b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px;letter-spacing:-.02em}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .rules b{color:#F4F2EE}}
+:root[data-theme="dark"] .rules b{color:#F4F2EE}
+@media (max-width:860px){.hero{grid-template-columns:1fr}.stage{min-height:320px}.side{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr 1fr}.sw{grid-template-columns:repeat(2,1fr)}.type,.rules{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}.big .arc{stroke-dashoffset:0}.big .dot{transform:none}}
+</style>
+
+<div class="wrap">
+  <div class="eb">Brand kit</div>
+  <h1>The gate <span class="it">mark.</span></h1>
+  <p class="lead">A G that opens like a gate, with a coin dropping into the middle. Black and white everywhere. Colour only shows up when money moves.</p>
+
+  <div class="hero">
+    <div class="stage" id="stage">
+      <svg class="big" id="big" viewBox="0 0 64 64" aria-label="Gatevoo mark"><rect width="64" height="64" rx="18" fill="#fff"/><path class="arc" pathLength="100" d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#121110" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle class="dot" cx="32.4" cy="32" r="3.3" fill="#121110"/></svg>
+      <button class="replay" id="replay" type="button">Replay ↻</button>
+    </div>
+    <div class="side">
+      <div class="tile w"><img src="brand/gatevoo-logo-on-light.svg" alt="Gatevoo logo on light"><small>On light</small></div>
+      <div class="tile k"><img src="brand/gatevoo-logo-on-dark.svg" alt="Gatevoo logo on dark"><small>On dark</small></div>
+    </div>
+  </div>
+
+  <h2>Download</h2>
+  <p class="lead">SVG files. They stay sharp at any size.</p>
+  <div class="grid">
+    <div class="dl"><div class="pv"><img src="brand/gatevoo-app-icon.svg" alt=""></div><b>App icon</b><a href="brand/gatevoo-app-icon.svg" download>Download <i>↓</i></a></div>
+    <div class="dl"><div class="pv"><img src="brand/gatevoo-mark-black.svg" alt=""></div><b>Mark · black</b><a href="brand/gatevoo-mark-black.svg" download>Download <i>↓</i></a></div>
+    <div class="dl"><div class="pv k"><img src="brand/gatevoo-mark-white.svg" alt=""></div><b>Mark · white</b><a href="brand/gatevoo-mark-white.svg" download>Download <i>↓</i></a></div>
+    <div class="dl"><div class="pv"><img src="brand/gatevoo-logo-on-light.svg" alt=""></div><b>Logo · light</b><a href="brand/gatevoo-logo-on-light.svg" download>Download <i>↓</i></a></div>
+  </div>
+
+  <h2>Colour</h2>
+  <p class="lead">Ink and paper do the work. Green and orange are only for coins and paid moments.</p>
+  <div class="sw">
+    <div class="c" style="background:#121110;color:#fff;border-color:#121110"><b>Ink</b><span>#121110</span></div>
+    <div class="c" style="background:#FAF9F5;color:#121110"><b>Paper</b><span>#FAF9F5</span></div>
+    <div class="c" style="background:#EEEBE2;color:#121110"><b>Line</b><span>#EEEBE2</span></div>
+    <div class="c" style="background:#26A17B;color:#fff;border-color:#26A17B"><b>USDT · paid</b><span>#26A17B</span></div>
+    <div class="c" style="background:#F7931A;color:#fff;border-color:#F7931A"><b>Bitcoin</b><span>#F7931A</span></div>
+  </div>
+
+  <h2>Type</h2>
+  <div class="type">
+    <div><div class="a">Get paid.</div><small>Plus Jakarta Sans · ExtraBold 800 · tight tracking</small></div>
+    <div><div class="b">Gate<span>voo</span></div><small>Two-tone: the second half in warm grey, like every Voo brand</small></div>
+  </div>
+
+  <h2>Rules</h2>
+  <div class="rules">
+    <div><b>Keep it mono</b>The mark is black on white or white on black. Never a gradient, never a brand colour.</div>
+    <div><b>Give it room</b>Leave space around the mark at least the size of the coin dot on every side.</div>
+    <div><b>Colour means money</b>Use green or orange only when a payment is moving or done.</div>
+  </div>
+</div>
+
+<script>
+document.getElementById('replay').addEventListener('click', () => {
+  const s = document.getElementById('big'); const c = s.cloneNode(true); s.replaceWith(c);
+});
+</script>

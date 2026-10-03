@@ -1,0 +1,1540 @@
+<meta charset="utf-8">
+<title>Gatevoo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the Voo system in black and white. Colour only appears when money moves (USDT green, Bitcoin orange).
+   Sections follow the Voo story order: hero → blind spot → the fix → follow one payment → dashboard → setup → compare → waitlist → FAQ. */
+:root{
+  --ink:#121110; --ink2:#1E1C19; --ink3:#2C2925; --bg:#FAF9F5; --card:#FFFFFF; --soft:#F3F1EB; --line:#EAE7DF; --line2:#DEDACF;
+  --mut:#5E5A50; --mut2:#948F82; --usdt:#26A17B; --btc:#F7931A; --ok:#1F9D6B;
+  --white:#FFFFFF; --mist:#F3F1EB; --mist-2:#ECE9E1; --brand:#1F9D6B; --brand-deep:#167A53; --mint:#26A17B; --mint-soft:#E5F5EE; --sun:#F7931A; --tg:#2AABEE; --muted:#5E5A50; --bad:#C2392F;
+  --sans:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --display:var(--sans);
+  --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.2,.9,.2,1);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:10px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px}
+.h1{margin:0;font-weight:800;font-size:clamp(46px,7.6vw,96px);line-height:.94;letter-spacing:-.06em;text-wrap:balance}
+.h2{margin:0;font-weight:800;font-size:clamp(34px,5vw,62px);line-height:.98;letter-spacing:-.055em;text-wrap:balance}
+.h3{margin:0;font-weight:800;font-size:clamp(20px,2.1vw,24px);letter-spacing:-.035em;line-height:1.15}
+.it{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.025em}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.eyebrow::before{content:"";width:18px;height:2px;border-radius:2px;background:currentColor}
+.eyebrow.light{color:#A9A398}
+.sub{color:var(--mut);font-size:18px;max-width:36em;margin:14px 0 0}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* buttons (Voo system) */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;cursor:pointer;text-decoration:none;font-weight:800;border-radius:999px;transition:transform .2s var(--ease),box-shadow .2s,background .2s;white-space:nowrap}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn-main{background:var(--ink);color:#fff;padding:8px 8px 8px 24px;font-size:16px;box-shadow:0 14px 34px -14px rgba(18,17,16,.6)}
+.btn-main .arr{width:42px;height:42px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;transition:transform .3s var(--ease)}
+.btn-main:hover .arr{transform:rotate(-45deg)}
+.btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line2);padding:13px 20px;font-size:15px;font-weight:700}
+.btn-ghost:hover{border-color:var(--ink)}
+.btn-ghost .pl{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center}
+.btn-sm{padding:9px 16px;font-size:14px}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-white{background:#fff;color:var(--ink)}
+
+/* top bar + nav */
+.bar{background:var(--ink);color:#E9E5DC;text-align:center;padding:10px 16px;font-size:14px;font-weight:600;display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap}
+.bar .tag{background:#fff;color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.1em;border-radius:999px;padding:4px 10px}
+.bar a{color:#fff;font-weight:800;text-decoration:none;border-bottom:1.5px solid rgba(255,255,255,.4)}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:rgba(250,249,245,.82);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid transparent;transition:border-color .2s}
+.nav.scrolled{border-bottom-color:var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:14px;padding-block:14px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
+.brand svg{width:38px;height:38px;flex:none}
+.brand .g-arc{stroke-dasharray:100;stroke-dashoffset:100;animation:gDraw 1.3s var(--ease) .2s forwards}
+.brand .g-dot{transform-box:fill-box;transform-origin:center;animation:gLand 3.2s var(--ease) infinite}
+@keyframes gDraw{to{stroke-dashoffset:0}}
+@keyframes gLand{0%,50%{transform:translate(16px,-16px) scale(.3);opacity:0;fill:#26A17B}68%{transform:none;opacity:1;fill:#26A17B}100%{transform:none;opacity:1;fill:#fff}}
+@media (prefers-reduced-motion:reduce){.brand .g-arc{stroke-dashoffset:0}}
+.word{font-weight:800;font-size:23px;letter-spacing:-.05em}
+.nav .links{display:flex;gap:2px}
+.nav .links a{text-decoration:none;font-size:14.5px;font-weight:600;color:var(--mut);padding:8px 12px;border-radius:999px}
+.nav .links a:hover{color:var(--ink);background:var(--soft)}
+
+/* hero */
+.hero{padding-block:40px 56px;position:relative;isolation:isolate}
+.hero .grid{display:grid;grid-template-columns:1fr 1.02fr;gap:36px;align-items:center}
+.live{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px;font-size:14px;font-weight:600;color:var(--mut);box-shadow:0 8px 20px -14px rgba(18,17,16,.3)}
+.live b{display:inline-flex;align-items:center;gap:7px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:5px 11px}
+.live b i{width:7px;height:7px;border-radius:50%;background:var(--usdt);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(38,161,123,.7)}80%,100%{box-shadow:0 0 0 8px rgba(38,161,123,0)}}
+.hero .h1{margin:22px 0 20px}
+.hero .h1 .ln{display:block;overflow:hidden;padding-bottom:.06em}
+.hero .h1 .ln>span{display:inline-block;animation:rise 1.1s var(--ease) both}
+.hero .h1 .ln:nth-child(2)>span{animation-delay:.12s}
+@keyframes rise{from{transform:translateY(106%)}}
+.lede{font-size:clamp(17px,1.8vw,19px);color:var(--mut);max-width:31em;margin:0 0 30px}
+.lede b{color:var(--ink);font-weight:700}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.ticks{display:flex;flex-wrap:wrap;gap:8px 18px;list-style:none;padding:0;margin:24px 0 0;font-size:14px;font-weight:600;color:var(--mut)}
+.ticks li{display:flex;align-items:center;gap:7px}
+.ticks svg{color:var(--ink)}
+.fade{animation:fadeUp 1s .35s var(--ease) both}
+@keyframes fadeUp{from{opacity:.01;transform:translateY(12px)}}
+
+/* giant type marquee */
+.mega{overflow:hidden;border-block:1px solid var(--line);padding-block:18px;background:var(--bg)}
+.mega .row{display:flex;gap:46px;width:max-content;animation:slide 30s linear infinite;align-items:center}
+.mega:hover .row{animation-play-state:paused}
+@keyframes slide{to{transform:translateX(-50%)}}
+.mega span{font-weight:800;font-size:clamp(40px,6vw,76px);letter-spacing:-.05em;line-height:1;white-space:nowrap;color:transparent;-webkit-text-stroke:1.5px var(--ink)}
+.mega span.f{color:var(--ink);-webkit-text-stroke:0}
+.mega span.f.u{color:var(--usdt)}.mega span.f.b{color:var(--btc)}
+.mega i{width:14px;height:14px;border-radius:50%;background:var(--ink);flex:none}
+
+/* sections */
+section.block{padding-block:110px}
+.head{display:grid;gap:4px;max-width:760px}
+.dark{background:var(--ink);color:#F4F2EE}
+.dark .sub{color:#A9A398}
+.dark .h2{color:#fff}
+
+/* blind spot */
+.pains{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:52px}
+.pain{background:var(--ink2);border:1px solid var(--ink3);border-radius:26px;padding:26px;display:grid;gap:14px;align-content:start;min-width:0}
+.pain p{margin:0;color:#A9A398;font-size:15px}
+.pain .h3{color:#fff}
+.demo{background:#0C0B0A;border:1px solid var(--ink3);border-radius:18px;padding:16px;min-height:132px;display:grid;place-items:center;position:relative;overflow:hidden}
+.decl{width:100%;max-width:240px;background:#fff;color:var(--ink);border-radius:14px;padding:12px;display:grid;gap:8px;animation:shake 4s var(--ease) infinite}
+.decl .r{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600}
+.decl .x{display:flex;align-items:center;gap:8px;background:#FDECEA;color:#B2342A;border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:800}
+@keyframes shake{0%,60%,100%{transform:none}64%{transform:translateX(-7px)}68%{transform:translateX(7px)}72%{transform:translateX(-5px)}76%{transform:translateX(5px)}80%{transform:none}}
+.frozen{display:grid;gap:6px;justify-items:center;text-align:center}
+.frozen b{font-size:30px;font-weight:800;letter-spacing:-.04em;color:#fff;filter:blur(0);animation:freeze 4s infinite}
+@keyframes freeze{0%,40%{filter:blur(0);opacity:1}55%,90%{filter:blur(5px);opacity:.35}100%{filter:blur(0);opacity:1}}
+.frozen span{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:800;color:#9FC9FF;background:rgba(80,140,255,.14);border-radius:99px;padding:4px 10px}
+.docs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:250px}
+.docs span{font-size:11.5px;font-weight:700;color:#C4BFB3;border:1px solid var(--ink3);border-radius:8px;padding:5px 8px;animation:pile 5s var(--ease) infinite both}
+.docs span:nth-child(2){animation-delay:.25s}.docs span:nth-child(3){animation-delay:.5s}.docs span:nth-child(4){animation-delay:.75s}.docs span:nth-child(5){animation-delay:1s}.docs span:nth-child(6){animation-delay:1.25s}
+@keyframes pile{0%{opacity:0;transform:translateY(-10px)}10%,85%{opacity:1;transform:none}100%{opacity:0}}
+
+/* the fix */
+.fix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:52px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:26px;padding:26px;display:grid;gap:12px;align-content:start;min-width:0;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.tile:hover{transform:translateY(-4px);box-shadow:0 30px 60px -34px rgba(18,17,16,.4);border-color:var(--line2)}
+.tile p{margin:0;color:var(--mut);font-size:15px}
+.ico{width:48px;height:48px;border-radius:15px;background:var(--ink);color:#fff;display:grid;place-items:center}
+.tile.wide{grid-column:span 2;background:var(--ink);border-color:var(--ink);color:#fff;grid-template-columns:1fr auto;align-items:center;gap:24px}
+.tile.wide p{color:#A9A398}
+.tile.wide .h3{color:#fff;font-size:clamp(26px,3vw,36px);letter-spacing:-.05em;line-height:1.02}
+.keyart{width:150px;height:150px;flex:none}
+.keyart .spin{transform-origin:75px 75px;animation:spin 16s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.where{display:flex;flex-wrap:wrap;gap:8px}
+.where span{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;border:1.5px solid var(--line2);border-radius:999px;padding:6px 12px;background:var(--bg)}
+
+/* dashboard preview */
+.dash-prev{margin-top:52px;background:var(--ink);border-radius:32px;padding:clamp(16px,3vw,28px);display:grid;grid-template-columns:200px 1fr;gap:18px;overflow:hidden;position:relative}
+.dp-side{background:var(--ink2);border-radius:20px;padding:14px;display:grid;gap:4px;align-content:start}
+.dp-side .it2{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;color:#A9A398;font-size:13.5px;font-weight:600}
+.dp-side .it2.on{background:var(--ink3);color:#fff}
+.dp-side .bal{margin-top:10px;background:#fff;color:var(--ink);border-radius:16px;padding:14px;display:grid;gap:2px}
+.dp-side .bal small{font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--mut)}
+.dp-side .bal b{font-size:22px;font-weight:800;letter-spacing:-.04em}
+.dp-main{display:grid;gap:14px;min-width:0}
+.dp-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.dp-k{background:#fff;border-radius:18px;padding:14px;display:grid;gap:4px;min-width:0}
+.dp-k small{font-size:12px;color:var(--mut);font-weight:600}
+.dp-k b{font-size:22px;font-weight:800;letter-spacing:-.04em;white-space:nowrap}
+.dp-k.hi{background:var(--usdt);color:#fff}.dp-k.hi small{color:rgba(255,255,255,.85)}
+.dp-list{background:#fff;border-radius:18px;padding:6px;display:grid;overflow:hidden;height:236px;position:relative}
+.dp-row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px;border-radius:12px;font-size:13.5px}
+.dp-row .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:var(--soft)}
+.dp-row b{display:block;font-weight:700}
+.dp-row small{color:var(--mut2);font-size:12px}
+.dp-row .amt{text-align:right;font-weight:800}
+.dp-row .amt span{display:block;font-size:11px;font-weight:800;color:var(--ok)}
+.dp-row.new{animation:rowIn .7s var(--ease);background:#EEF8F3}
+@keyframes rowIn{from{opacity:0;transform:translateY(-14px)}}
+.dp-badge{position:absolute;right:20px;top:20px;display:flex;align-items:center;gap:8px;background:#fff;color:var(--ink);border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:800;box-shadow:0 14px 30px -14px rgba(0,0,0,.6);opacity:0;transform:translateY(-8px);transition:all .5s var(--ease)}
+.dp-badge.on{opacity:1;transform:none}
+.dp-badge i{width:8px;height:8px;border-radius:50%;background:var(--usdt)}
+
+/* setup */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:52px;counter-reset:s}
+.step{background:#fff;border:1px solid var(--line);border-radius:26px;padding:26px;display:grid;gap:12px;align-content:start;position:relative;overflow:hidden;min-width:0}
+.step .n{font-weight:800;font-size:64px;line-height:.8;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1.5px var(--line2)}
+.step p{margin:0;color:var(--mut);font-size:15px}
+.step .t{font-size:12px;font-weight:800;color:var(--mut);letter-spacing:.08em}
+pre.code{margin:0;background:var(--ink);color:#E9E5DC;border-radius:16px;padding:14px;font:12px/1.65 var(--mono);overflow-x:auto}
+pre.code .k{color:#fff;font-weight:700}pre.code .s{color:#8FD9B9}pre.code .c{color:#7B766B}
+
+/* compare */
+.cmp{margin-top:48px;background:#fff;border:1px solid var(--line);border-radius:26px;overflow:hidden}
+.cmp .r{display:grid;grid-template-columns:1.4fr 1fr 1fr;border-bottom:1px solid var(--line)}
+.cmp .r:last-child{border-bottom:0}
+.cmp .r>div{padding:16px 18px;font-size:14.5px;display:flex;align-items:center;gap:8px;min-width:0}
+.cmp .r>div:nth-child(2){background:var(--ink);color:#fff;font-weight:700}
+.cmp .hd>div{font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.cmp .hd>div:nth-child(2){color:#fff}
+.yes{color:#7FE0B6}.no{color:var(--mut2)}
+.cmp small{display:block;color:var(--mut2);font-size:12px;margin-top:10px}
+
+/* waitlist */
+.join{background:var(--ink);color:#F4F2EE;border-radius:36px;padding:clamp(28px,6vw,70px);display:grid;grid-template-columns:1fr 1fr;gap:48px;position:relative;overflow:hidden;isolation:isolate}
+.join::before{content:"";position:absolute;inset:-40%;z-index:-1;background:conic-gradient(from 0deg,transparent 0 70%,rgba(255,255,255,.08) 80%,transparent 90%);animation:spin 18s linear infinite}
+.join .h2{color:#fff}
+.join .sub{color:#A9A398}
+.perks{list-style:none;padding:0;margin:30px 0 0;display:grid;gap:16px}
+.perks li{display:grid;grid-template-columns:auto 1fr;gap:14px;font-weight:700}
+.perks li span{width:30px;height:30px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center}
+.perks small{display:block;color:#A9A398;font-weight:500;font-size:15px}
+.form{background:#fff;color:var(--ink);border-radius:28px;padding:clamp(22px,4vw,32px);display:grid;gap:16px;align-self:start;box-shadow:0 40px 80px -30px rgba(0,0,0,.6)}
+.field{display:grid;gap:7px}
+.field label{font-weight:700;font-size:14px}
+.input{width:100%;border:1.5px solid var(--line2);border-radius:14px;padding:13px 15px;font-size:16px;background:#fff;transition:border-color .15s,box-shadow .15s;appearance:none}
+select.input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23121110' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+.input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 4px var(--soft)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.form .btn-main{width:100%;justify-content:space-between}
+.fine{font-size:13px;color:var(--mut);margin:0}
+.err{color:var(--bad);font-weight:700;font-size:14px;margin:0}
+.done{display:grid;gap:12px;justify-items:start;padding-block:10px}
+.bigok{width:62px;height:62px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;animation:pop .6s cubic-bezier(.2,1.6,.3,1)}
+@keyframes pop{from{transform:scale(.3)}}
+.done h3{margin:0;font-size:30px;font-weight:800;letter-spacing:-.05em}
+.done p{margin:0;color:var(--mut)}
+
+/* FAQ */
+.faq{margin-top:40px;display:grid;gap:10px;max-width:860px}
+.faq details{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:border-color .2s}
+.faq details[open]{border-color:var(--ink)}
+.faq summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;font-weight:800;font-size:16.5px;letter-spacing:-.02em}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary i{width:30px;height:30px;border-radius:50%;background:var(--soft);display:grid;place-items:center;flex:none;transition:transform .3s var(--ease),background .2s}
+.faq details[open] summary i{transform:rotate(45deg);background:var(--ink);color:#fff}
+.faq p{margin:0;padding:0 20px 18px;color:var(--mut)}
+
+footer{padding-block:44px 120px;border-top:1px solid var(--line)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center;font-size:14px;color:var(--mut)}
+.suite{display:flex;gap:16px;flex-wrap:wrap;font-weight:700;color:var(--ink)}
+.vsq{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line2);border-radius:999px;padding:6px 12px 6px 6px;font-weight:700;color:var(--ink);text-decoration:none}
+.vsq i{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#18C784,#067A4A)}
+
+/* Ask Gia */
+.gia-btn{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:8px 18px 8px 8px;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 20px 40px -14px rgba(18,17,16,.6);transition:transform .2s}
+.gia-btn:hover{transform:translateY(-2px)}
+.gia-face{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center;position:relative}
+.gia-face::after{content:"";position:absolute;right:0;top:0;width:10px;height:10px;border-radius:50%;background:var(--usdt);border:2px solid var(--ink)}
+.gia-face i{display:block;width:5px;height:8px;border-radius:3px;background:var(--ink);margin:0 2.5px;animation:blinkEye 4s infinite}
+@keyframes blinkEye{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.15)}}
+.gia{position:fixed;right:18px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:61;width:min(370px,calc(100% - 36px));max-height:min(560px,75vh);background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:0 40px 80px -30px rgba(18,17,16,.5);display:flex;flex-direction:column;overflow:hidden;transform-origin:bottom right;transition:transform .35s var(--ease),opacity .25s;transform:scale(.9) translateY(10px);opacity:0;pointer-events:none}
+.gia.on{transform:none;opacity:1;pointer-events:auto}
+.gia-h{display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--ink);color:#fff}
+.gia-h b{display:block;font-size:15px}
+.gia-h small{font-size:12px;color:#A9A398}
+.gia-h button{margin-left:auto;background:#2C2925;border:0;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer}
+.gia-b{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.gm{max-width:86%;padding:9px 12px;border-radius:16px;font-size:14px;line-height:1.45;animation:fadeUp .35s var(--ease)}
+.gm.g{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:5px}
+.gm.u{background:var(--ink);color:#fff;align-self:flex-end;border-bottom-right-radius:5px}
+.gq{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 14px;border-top:1px solid var(--line);background:#fff}
+.gq button{border:1.5px solid var(--line2);background:#fff;border-radius:999px;padding:7px 11px;font-size:13px;font-weight:700;cursor:pointer}
+.gq button:hover{border-color:var(--ink)}
+
+
+/* live conversation */
+.talk{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:center}
+.talk .lead p{color:var(--mut);font-size:18px;margin:14px 0 0;max-width:30em}
+.talk .who{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+.talk .who span{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 5px;font-size:13.5px;font-weight:700}
+.talk .who i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:17px;background:var(--soft)}
+.chatbox{background:#fff;border:1px solid var(--line);border-radius:30px;box-shadow:0 40px 80px -40px rgba(18,17,16,.45);overflow:hidden;display:flex;flex-direction:column;height:600px;min-width:0}
+.cb-h{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.cb-h .avs{display:flex}
+.cb-h .avs i{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:19px;background:var(--soft);border:2px solid #fff}
+.cb-h .avs i+i{margin-left:-10px}
+.cb-h b{display:block;font-size:15px;letter-spacing:-.02em}
+.cb-h small{font-size:12.5px;color:var(--usdt);font-weight:600}
+.cb-h .rp{margin-left:auto;font-size:12px;font-weight:800;border:1.5px solid var(--line2);border-radius:999px;padding:6px 11px;background:#fff;cursor:pointer}
+.cb-h .rp:hover{border-color:var(--ink)}
+.cb-b{flex:1;overflow:hidden;padding:16px 14px;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;background:radial-gradient(circle at 1px 1px,#E8E5DD 1px,transparent 0) 0 0/18px 18px,var(--bg)}
+.cm{display:flex;gap:8px;align-items:flex-end;max-width:88%;animation:cmIn .45s var(--ease) both}
+@keyframes cmIn{from{opacity:0;transform:translateY(12px) scale(.97)}}
+.cm .a{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:16px;background:#fff;border:1px solid var(--line);flex:none}
+.cm .bb{background:#fff;border:1px solid var(--line);border-radius:18px;border-bottom-left-radius:6px;padding:9px 12px;font-size:14.5px;line-height:1.4;position:relative}
+.cm.me{align-self:flex-end;flex-direction:row-reverse}
+.cm.me .bb{background:var(--ink);color:#fff;border-color:var(--ink);border-radius:18px;border-bottom-right-radius:6px}
+.cm .nm{display:block;font-size:11.5px;font-weight:800;color:var(--mut);margin-bottom:2px}
+.cm.me .nm{color:#A9A398}
+.cm .dots{display:inline-flex;gap:4px;padding:3px 0}
+.cm .dots i{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.35;animation:dt 1.1s infinite}
+.cm .dots i:nth-child(2){animation-delay:.15s}.cm .dots i:nth-child(3){animation-delay:.3s}
+@keyframes dt{30%{opacity:1;transform:translateY(-3px)}}
+.react{position:absolute;right:-6px;bottom:-12px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:1px 6px;font-size:13px;animation:pop .5s cubic-bezier(.2,1.6,.3,1)}
+.lcard{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:7px;background:var(--soft);border-radius:12px;padding:8px 10px;color:var(--ink)}
+.lcard svg{width:30px;height:30px}
+.lcard b{display:block;font-size:13px}
+.lcard small{font-size:11.5px;color:var(--mut)}
+.voice{display:flex;align-items:center;gap:9px;min-width:190px}
+.voice .pb{width:30px;height:30px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;flex:none}
+.voice .wv{display:flex;align-items:center;gap:2px;height:24px;flex:1}
+.voice .wv i{width:3px;border-radius:3px;background:rgba(255,255,255,.4);transition:background .15s}
+.voice .wv i.on{background:#fff}
+.voice small{font-size:11px;color:#A9A398;font-variant-numeric:tabular-nums}
+.vtext{display:block;font-size:12px;color:#C4BFB3;margin-top:6px;font-style:italic}
+.minipay{display:block;margin-top:4px;width:220px;max-width:100%;background:#fff;color:var(--ink);border-radius:18px;border:1px solid var(--line);overflow:hidden}
+.mp-h{display:flex;align-items:center;gap:7px;padding:9px 11px;border-bottom:1px solid var(--line);font-size:11.5px;font-weight:700}
+.mp-h svg{width:18px;height:18px}
+.mp-h span{margin-left:auto;color:var(--mut2);font-weight:600}
+.mp-b{padding:11px;display:grid;gap:8px}
+.mp-b .amt{font-size:24px;font-weight:800;letter-spacing:-.04em}
+.mp-b .cn{display:flex;gap:6px}
+.mp-b .cn span{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:1.5px solid var(--line);border-radius:10px;padding:6px;font-size:11.5px;font-weight:700;transition:all .3s}
+.mp-b .cn span.on{border-color:var(--ink);background:var(--ink);color:#fff}
+.mp-b .cn i{width:14px;height:14px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:8px;font-style:normal;font-weight:800}
+.mp-pay{position:relative;height:38px;border-radius:12px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12.5px;font-weight:800;overflow:hidden}
+.mp-pay .fl{position:absolute;inset:0;width:0;background:var(--usdt);transition:width 1.6s var(--ease)}
+.mp-pay span{position:relative}
+.mp-ok{display:flex;align-items:center;gap:7px;justify-content:center;font-size:12.5px;font-weight:800;color:var(--ok)}
+@media (max-width:980px){.talk{grid-template-columns:1fr;gap:28px}.chatbox{height:560px}}
+/* ── the film (scroll-driven) ── */
+.film{position:relative;background:var(--ink);color:#EAF4EF;padding-block:96px;overflow:hidden}
+.film .pin{position:relative;display:grid;align-items:center}
+.film .pin::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 500px at 60% 50%,rgba(255,255,255,.08),transparent 65%);pointer-events:none}
+.film .inner{position:relative;display:grid;grid-template-columns:.9fr 1.1fr;gap:30px;align-items:center;width:100%}
+.caps{position:relative;min-height:260px}
+.cap{position:absolute;inset:0;display:grid;align-content:start;gap:14px;opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease);pointer-events:none}
+.cap.on{opacity:1;transform:none;pointer-events:auto}
+.cap .k{font-family:var(--sans);font-weight:800;font-size:12px;letter-spacing:.16em;color:#A9A398}
+.cap h3{margin:0;font-size:clamp(34px,4.6vw,58px);line-height:.98;letter-spacing:-.065em;font-weight:700}
+.cap h3 em{font-family:var(--serif);font-weight:400;color:#C9C4B8}
+.cap p{margin:0;color:#9DB2A9;font-size:17px;max-width:28em}
+.player{display:flex;gap:10px;align-items:center;margin-top:28px;flex-wrap:wrap}
+.pp{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#EAF4EF;display:grid;place-items:center;cursor:pointer;flex:none;transition:background .2s}
+.pp:hover{background:rgba(255,255,255,.12)}
+.chapters{display:flex;gap:6px;flex:1;min-width:0}
+.chapters button{position:relative;flex:1;min-width:0;font:500 12px var(--mono);color:#6F8A7F;padding:9px 10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);overflow:hidden;cursor:pointer;text-align:left;white-space:nowrap;text-overflow:ellipsis;transition:color .2s,border-color .2s}
+.chapters button:hover{border-color:rgba(60,230,166,.4)}
+.chapters button i{position:absolute;left:0;bottom:0;height:2px;width:0;background:#fff}
+.chapters button.on{color:#EAF4EF}
+.film .lead{text-align:left;margin-bottom:36px}
+.film .lead h2{color:#fff;margin-bottom:0}
+.film .lead h2 .sf{color:var(--sun)}
+
+.set{position:relative;height:600px;display:grid;place-items:center}
+.device{position:relative;width:min(300px,64vw);aspect-ratio:9/19;border-radius:44px;background:#05100B;padding:10px;box-shadow:0 0 0 1.5px #2A3A33,0 50px 100px -30px rgba(0,0,0,.8),inset 0 0 0 2px #0F1E18;z-index:2}
+.device .notch{position:absolute;top:18px;left:50%;width:84px;height:24px;margin-left:-42px;border-radius:14px;background:#05100B;z-index:5}
+.screen{position:relative;height:100%;border-radius:34px;overflow:hidden;background:#fff;color:var(--ink)}
+.scr{position:absolute;inset:0;padding:54px 14px 14px;display:flex;flex-direction:column;transition:transform .7s var(--ease),opacity .5s;background:#fff}
+.scr.off-r{transform:translateX(100%);opacity:0}
+.scr.off-l{transform:translateX(-30%);opacity:0}
+
+/* telegram */
+.tgbar{position:absolute;top:0;left:0;right:0;height:96px;padding:52px 14px 0;display:flex;align-items:center;gap:10px;background:#fff;border-bottom:1px solid #EEF1F0;z-index:2}
+.tgbar .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#FFD24D,#FF9F43);display:grid;place-items:center;font-size:10px;font-weight:700;color:#5A3A00}
+.tgbar b{font-size:13.5px;display:block;line-height:1.1}
+.tgbar small{font-size:11px;color:var(--tg)}
+.chatwin{position:absolute;inset:96px 0 0;padding:12px 10px;display:flex;flex-direction:column;gap:7px;justify-content:flex-end;background:linear-gradient(180deg,#E9F5EC,#DCEFE2);font-size:12.5px;overflow:hidden}
+.msg{max-width:84%;padding:7px 10px;border-radius:14px;background:#fff;line-height:1.35;box-shadow:0 1px 1px rgba(0,0,0,.06);flex:none;display:none}
+.msg.me{align-self:flex-end;background:#DFF8C9;border-bottom-right-radius:4px}
+.msg.them{align-self:flex-start;border-bottom-left-radius:4px}
+.msg.on{display:block;animation:msgIn .45s var(--ease)}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px) scale(.96)}}
+.msg .tm{font-size:9.5px;color:#7E9188;float:right;margin:4px 0 0 8px}
+.linkcard{display:block;border-radius:10px;overflow:hidden;border:1px solid #CFE8D8;background:#F6FCF8}
+.linkcard span.in{display:block;padding:7px 9px}
+.linkcard b{display:block;font-size:12px;color:var(--brand-deep)}
+.linkcard span.s{font-size:11px;color:#5B6A64}
+.linkcard .bt{display:block;text-align:center;background:var(--brand);color:#fff;font-weight:600;padding:7px;font-size:12px}
+.sys{align-self:center;font-family:var(--mono);font-size:10.5px;color:#fff;background:var(--brand);border-radius:99px;padding:5px 10px;flex:none;display:none}
+.sys.on{display:block;animation:pop .5s cubic-bezier(.2,1.6,.3,1)}
+.fweb{display:flex;flex-direction:column;gap:9px;height:100%;position:relative}
+.fweb .pbtn{transition:transform .25s,box-shadow .3s}
+.fweb .pbtn.on{transform:scale(.96);box-shadow:0 0 0 4px rgba(0,182,122,.3)}
+.fweb .tap{position:absolute;left:50%;bottom:58px;width:34px;height:34px;margin-left:-17px;border-radius:50%;border:2px solid var(--brand);opacity:0}
+.fweb .tap.on{animation:tapr 1.4s var(--ease) infinite}
+@keyframes tapr{0%{transform:scale(.4);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+.fweb .ordok{inset:-6px;border-radius:16px}
+@keyframes pop{from{transform:scale(.4);opacity:0}}
+
+/* checkout */
+.co{display:grid;gap:10px;align-content:start}
+.co .mh{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;gap:6px}
+.co .mh i{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:#FF9F43;color:#fff;font-style:normal;font-size:10px;margin-right:6px;vertical-align:middle}
+.co .amt{font-size:34px;font-weight:700;letter-spacing:-.06em;line-height:1}
+.co .amt small{display:block;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:0;margin-top:4px}
+.opt{display:flex;gap:9px;align-items:center;border:1.5px solid var(--line);border-radius:14px;padding:9px;font-size:13px;font-weight:600;transition:all .4s var(--ease)}
+.opt .c{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:700}
+.opt small{display:block;font-size:10.5px;color:var(--muted);font-weight:500}
+.opt.sel{border-color:var(--brand);background:var(--mint-soft);box-shadow:0 0 0 3px rgba(0,182,122,.15)}
+.qrw{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;opacity:0;transform:translateY(8px);transition:all .5s var(--ease)}
+.qrw.on{opacity:1;transform:none}
+.qrw canvas{width:86px;height:86px;border-radius:10px;border:1px solid var(--line);padding:5px;image-rendering:pixelated;background:#fff}
+.qrw b{font-family:var(--mono);font-size:15px;display:block}
+.qrw small{font-size:10.5px;color:var(--muted)}
+.cd{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.cd i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:blinkdot 1s infinite}
+@keyframes blinkdot{50%{opacity:.2}}
+
+/* wallet */
+.scr.wl{background:linear-gradient(180deg,#0E2A20,#0A1712);color:#EAF4EF}
+.wl .wh{font-size:12px;color:#8FB3A4;text-align:center}
+.wl .big{font-size:36px;font-weight:700;letter-spacing:-.06em;text-align:center;font-family:var(--mono)}
+.wl .big small{display:block;font-size:12px;color:#8FB3A4;font-family:var(--display);letter-spacing:0;font-weight:500}
+.wl .to{border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px;font-size:11px;color:#8FB3A4;display:grid;gap:3px}
+.wl .to b{font-family:var(--mono);color:#EAF4EF;font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slide{margin-top:auto;position:relative;height:50px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;font-size:13px;color:#8FB3A4;display:grid;place-items:center}
+.slide .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--brand),var(--mint))}
+.slide .knob{position:absolute;left:4px;top:4px;width:42px;height:42px;border-radius:50%;background:#fff;color:var(--brand-deep);display:grid;place-items:center;z-index:2}
+.slide span.lb{position:relative;z-index:1}
+.sent{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:10px;background:linear-gradient(180deg,#0E2A20,#0A1712);opacity:0;transition:opacity .5s;text-align:center}
+.sent.on{opacity:1}
+.sent .ok{width:64px;height:64px;border-radius:50%;background:var(--mint);color:var(--ink);display:grid;place-items:center;transform:scale(.5);transition:transform .6s cubic-bezier(.2,1.6,.3,1)}
+.sent.on .ok{transform:none}
+
+/* flying money + receiver */
+.coinlane{position:absolute;inset:0;pointer-events:none;z-index:3}
+.fly{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;opacity:0;box-shadow:0 10px 20px -6px rgba(0,0,0,.5)}
+.fly.note{width:46px;height:26px;margin:-13px 0 0 -23px;border-radius:6px;background:linear-gradient(135deg,#3CE6A6,#00A16B);font-size:12px;box-shadow:0 0 0 2px rgba(255,255,255,.25) inset,0 10px 20px -6px rgba(0,0,0,.5)}
+.receiver,.dash{position:absolute;z-index:1;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:14px 16px;transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.receiver{right:-2%;top:16%;width:200px;opacity:0;transform:translateX(20px)}
+.receiver.on{opacity:1;transform:none}
+.receiver small,.dash small{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:#8FB3A4;display:block}
+.receiver b{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.04em;display:block;margin-top:4px}
+.receiver .who{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12px;color:#B8CDC4}
+.receiver .who i{width:24px;height:24px;border-radius:50%;background:var(--sun);color:var(--ink);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}
+.receiver.pulse{animation:rpulse .7s var(--ease)}
+@keyframes rpulse{40%{box-shadow:0 0 0 8px rgba(60,230,166,.25);border-color:var(--mint)}}
+.dash{left:-4%;bottom:12%;width:220px;opacity:0;transform:translateY(20px)}
+.dash.on{opacity:1;transform:none}
+.dash b{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.04em;display:block;margin:4px 0 8px;color:var(--mint)}
+.dash svg{width:100%;height:46px;display:block}
+.dash .ln{stroke-dasharray:300;stroke-dashoffset:300;transition:stroke-dashoffset 1.4s var(--ease)}
+.dash.on .ln{stroke-dashoffset:0}
+
+
+/* ── cinematic send ── */
+.cine{position:relative;height:540px;border-radius:32px;background:radial-gradient(560px 360px at 50% 38%,rgba(255,255,255,.10),transparent 70%),#0C0B0A;overflow:hidden;isolation:isolate;box-shadow:0 50px 90px -40px rgba(18,17,16,.55),inset 0 0 0 1px rgba(255,255,255,.07);perspective:1100px;min-width:0}
+.cgrid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:34px 34px;-webkit-mask-image:radial-gradient(70% 60% at 50% 50%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 50%,#000,transparent);z-index:-1}
+#beam{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+.chipx{position:absolute;z-index:4;display:flex;align-items:center;gap:8px;font:500 11.5px var(--mono);color:#B8CDC4;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:12px;padding:8px 12px;transition:border-color .4s,box-shadow .4s}
+.chipx.tl{left:16px;top:16px}
+.chipx.tl em{font-style:normal;color:#6F8A7F}
+.chipx.tr{right:16px;top:16px;display:grid;gap:0;text-align:right}
+.chipx.tr small{font-size:10px;color:#6F8A7F;letter-spacing:.06em;text-transform:uppercase}
+.chipx.tr b{font:600 17px var(--mono);color:#fff;letter-spacing:-.03em}
+.chipx.pulse{animation:cp .9s var(--ease)}
+@keyframes cp{30%{border-color:#26A17B;box-shadow:0 0 0 6px rgba(38,161,123,.2),0 0 30px rgba(38,161,123,.4)}}
+.ldot{width:7px;height:7px;border-radius:50%;background:#3A4A43}
+.cine.live .ldot{background:#F7931A;box-shadow:0 0 10px #F7931A;animation:bl .5s infinite}
+.cine.paid .ldot{background:#26A17B;box-shadow:0 0 10px #26A17B;animation:none}
+.cine.paid .chipx.tl em{color:#5FD3A6}
+@keyframes bl{50%{opacity:.3}}
+.dev{--rx:0deg;--ry:0deg;position:absolute;top:50%;width:196px;aspect-ratio:9/18.6;border-radius:34px;padding:7px;background:linear-gradient(160deg,#3A3834,#121110);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 40px 60px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .6s var(--ease);z-index:2}
+.dev.d1{left:7%;transform:translateY(-46%) rotateY(calc(14deg + var(--ry))) rotateX(var(--rx)) rotateZ(-4deg);animation:fl1 7s ease-in-out infinite}
+.dev.d2{right:7%;transform:translateY(-54%) rotateY(calc(-14deg + var(--ry))) rotateX(var(--rx)) rotateZ(4deg);animation:fl2 8s ease-in-out infinite}
+@keyframes fl1{50%{margin-top:-10px}}
+@keyframes fl2{50%{margin-top:10px}}
+.dscr{position:relative;height:100%;border-radius:28px;overflow:hidden;padding:30px 12px 12px;display:flex;flex-direction:column;gap:10px}
+.dscr::before{content:"";position:absolute;top:9px;left:50%;width:56px;height:16px;margin-left:-28px;border-radius:10px;background:#05100B;z-index:3}
+.tagdev{position:absolute;left:50%;bottom:-30px;transform:translateX(-50%);font:500 11px var(--mono);color:#6F8A7F;white-space:nowrap;letter-spacing:.04em}
+.wallet{background:linear-gradient(180deg,#1E1C19,#0C0B0A);color:#F4F2EE}
+.wtop{display:flex;align-items:baseline;gap:6px;font-size:12px;color:#8FB3A4;justify-content:center}
+.wtop b{color:#fff;font-size:13px}
+.wtop small{font:500 9.5px var(--mono);background:rgba(255,255,255,.08);border-radius:6px;padding:2px 5px}
+.wamt{text-align:center;margin-top:6px}
+.wamt b{display:block;font:600 30px var(--mono);letter-spacing:-.05em}
+.wamt small{font:500 11px var(--mono);color:#8FB3A4}
+.wto,.wfee{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px;font-size:10.5px;color:#8FB3A4;display:grid;gap:2px}
+.wto b{font:500 10.5px var(--mono);color:#EAF4EF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wfee{display:flex;justify-content:space-between}
+.wslide{margin-top:auto;position:relative;height:44px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;display:grid;place-items:center;font-size:11.5px;color:#8FB3A4}
+.wfill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#FFFFFF,#D9D6CE);box-shadow:0 0 22px rgba(255,255,255,.55)}
+.wknob{position:absolute;left:4px;top:4px;width:36px;height:36px;border-radius:50%;background:#fff;color:#121110;display:grid;place-items:center;z-index:2;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.wlb{position:relative;z-index:1}
+.wsent{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:8px;background:linear-gradient(180deg,#1E1C19,#0C0B0A);opacity:0;transition:opacity .4s;text-align:center;z-index:4}
+.wsent.on{opacity:1}
+.wsent .ok{width:58px;height:58px;border-radius:50%;background:#fff;color:var(--ink);display:grid;place-items:center;transform:scale(.4);transition:transform .6s cubic-bezier(.2,1.6,.3,1);box-shadow:0 0 0 10px rgba(255,255,255,.1),0 0 40px rgba(255,255,255,.35)}
+.wsent.on .ok{transform:none}
+.wsent b{font-size:16px}
+.wsent small{font:500 11px var(--mono);color:#8FB3A4}
+.tg{background:#fff;color:var(--ink);padding:0}
+.dscr.web,.dscr.tg{position:absolute;inset:7px;transition:opacity .5s,transform .6s var(--ease)}
+.cine[data-mode="web"] .dscr.tg,.cine[data-mode="tg"] .dscr.web{opacity:0;transform:scale(.96);pointer-events:none}
+.web{background:#fff;color:var(--ink);padding:28px 10px 10px;gap:8px}
+.ubar{display:flex;gap:5px;align-items:center;justify-content:center;font:500 9px var(--mono);color:#66736D;background:#F1F5F3;border-radius:8px;padding:5px}
+.shop{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;color:#66736D}
+.shop b{font-size:13px;color:var(--ink);letter-spacing:-.02em}
+.prod{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:10.5px;border:1px solid #E4EAE7;border-radius:12px;padding:7px}
+.prod .pimg{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#FFE08A,#FF9F43)}
+.prod b{display:block;font-size:10.8px}
+.prod small{color:#97A39D;font-size:9.5px}
+.prod>span:last-child{font:600 10.5px var(--mono)}
+.tot{display:flex;justify-content:space-between;font-size:11px;padding:2px 2px 0}
+.tot b{font:600 13px var(--mono)}
+.pbtn{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:6px;background:#0B1410;color:#fff;border-radius:12px;padding:10px;font-size:11.5px;font-weight:600;transition:transform .2s,box-shadow .3s}
+.cine.press .pbtn{transform:scale(.95);box-shadow:0 0 0 4px rgba(0,182,122,.35)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cards span{text-align:center;font-size:10px;color:#97A39D;border:1px solid #E4EAE7;border-radius:10px;padding:7px}
+.ordok{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:5px;background:#fff;text-align:center;opacity:0;transition:opacity .45s;padding:20px}
+.ordok.on{opacity:1}
+.ordok .ok{width:50px;height:50px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;transform:scale(.4);transition:transform .6s cubic-bezier(.2,1.6,.3,1);box-shadow:0 0 0 8px rgba(0,182,122,.14)}
+.ordok.on .ok{transform:none}
+.ordok b{font-size:14px}
+.ordok small{font:500 10px var(--mono);color:#66736D}
+.ordok i{font-style:normal;font-size:10px;color:#97A39D}
+.tghd{display:flex;align-items:center;gap:8px;padding:30px 10px 8px;border-bottom:1px solid #EEF1F0;background:#fff}
+.tghd .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#FFD24D,#FF9F43);display:grid;place-items:center;font-size:8.5px;font-weight:700;color:#5A3A00;flex:none}
+.tghd b{font-size:11.5px;display:block;line-height:1.1}
+.tghd small{font-size:10px;color:var(--tg)}
+.tgw{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:6px;justify-content:flex-end;background:linear-gradient(180deg,#E9F5EC,#DCEFE2);font-size:10.8px;line-height:1.35}
+.m{max-width:88%;padding:6px 9px;border-radius:12px;background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+.m.th{align-self:flex-start;border-bottom-left-radius:4px}
+.m.me{align-self:flex-end;background:#DFF8C9;border-bottom-right-radius:4px}
+.m.hidden{display:none}
+.lc{display:grid;margin-top:5px;border-radius:8px;overflow:hidden;border:1px solid #CFE8D8;background:#F6FCF8;padding:5px 7px}
+.lc b{font-size:10px;color:var(--brand-deep)}
+.lc i{font-style:normal;font-size:9.5px;color:#5B6A64}
+.sysp{align-self:center;display:flex;gap:5px;align-items:center;font:600 9.5px var(--mono);color:#fff;background:var(--brand);border-radius:99px;padding:5px 10px;opacity:0;transform:scale(.6);transition:all .5s cubic-bezier(.2,1.6,.3,1);height:0;padding-block:0;overflow:hidden}
+.sysp.on{opacity:1;transform:none;height:auto;padding-block:5px;box-shadow:0 0 0 4px rgba(0,182,122,.18),0 6px 18px -4px rgba(0,182,122,.6)}
+.cine.paid .d2{box-shadow:0 0 0 1px rgba(255,255,255,.4),0 0 60px -10px rgba(38,161,123,.7),0 40px 60px -20px rgba(0,0,0,.8)}
+@media (max-width:980px){.cine{height:500px;margin-top:10px}}
+@media (max-width:600px){
+  .cine{height:440px;border-radius:26px}
+  .dev{width:146px;border-radius:28px;padding:6px}
+  .dscr{border-radius:23px;padding:26px 9px 9px;gap:7px}
+  .dev.d1{left:3%}.dev.d2{right:3%}
+  .wamt b{font-size:22px}.wto,.wfee{padding:6px 8px;font-size:9.5px}.wslide{height:36px;font-size:10px}.wknob{width:28px;height:28px}
+  .tgw{font-size:9.6px}.tghd{padding:26px 8px 6px}
+  .chipx{font-size:10px;padding:6px 9px}.chipx.tr b{font-size:14px}
+  .tagdev{bottom:-26px;font-size:9.5px}
+}
+@media (prefers-reduced-motion:reduce){.dev{animation:none!important}}
+
+@media (max-width:980px){
+  .film{padding-block:70px}
+  .film .inner{grid-template-columns:1fr;gap:18px}
+  .caps{min-height:150px}
+  .cap h3{font-size:28px}.cap p{font-size:14.5px}
+  .chapters button{font-size:10.5px;padding:8px 6px 11px;text-align:center}
+  .set{height:500px}
+  .hero .grid,.join{grid-template-columns:1fr}
+  .pains,.fix,.steps{grid-template-columns:1fr 1fr}
+  .tile.wide{grid-column:span 2}
+  .dash-prev{grid-template-columns:1fr}
+  .dp-side{display:none}
+  .nav .links{display:none}
+}
+@media (max-width:640px){
+  .pains,.fix,.steps{grid-template-columns:1fr}
+  .tile.wide{grid-column:span 1;grid-template-columns:1fr}
+  .keyart{width:110px;height:110px}
+  .two{grid-template-columns:1fr}
+  .dp-kpis{grid-template-columns:1fr 1fr}.dp-kpis .dp-k:last-child{grid-column:1/-1}
+  .cmp .r{grid-template-columns:1.1fr .9fr .9fr}
+  .cmp .r>div{padding:12px 10px;font-size:13px}
+  .join{border-radius:28px}
+  .gia-btn span.lb{display:none}.gia-btn{padding:8px}
+  .bar{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ════ v2: Voo two-tone type, family, story ════ */
+.it,.cap h3 em,.h2 em{font-family:inherit!important;font-style:normal!important;font-weight:800!important;letter-spacing:inherit!important;
+  color:transparent;background:linear-gradient(100deg,#A8A396 0%,#A8A396 40%,#121110 50%,#A8A396 60%,#A8A396 100%);background-size:250% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;animation:toneShine 7s var(--ease) 1.2s infinite}
+.dark .it,.film .it,.cap h3 em,.join .it,.fam .it{background-image:linear-gradient(100deg,#6E695E 0%,#6E695E 40%,#FFFFFF 50%,#6E695E 60%,#6E695E 100%)}
+@keyframes toneShine{0%,55%{background-position:100% 0}85%,100%{background-position:0 0}}
+.word>span{color:#A8A396}
+.h1{letter-spacing:-.065em}.h2{letter-spacing:-.06em}
+.h1 .it{display:inline-block}
+
+/* reveal */
+[data-rv]{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+[data-rv].in{opacity:1;transform:none}
+
+/* app icons */
+[data-app]{display:inline-block;width:44px;height:44px;flex:none}
+[data-app] svg{width:100%;height:100%;display:block}
+
+/* Voo strip */
+.vstrip{border-block:1px solid var(--line);background:var(--card)}
+.vs-in{display:flex;align-items:center;gap:28px;padding-block:22px}
+.vs-l{font-size:13px;line-height:1.25;color:var(--mut);flex:none;padding-right:24px;border-right:1px solid var(--line)}
+.vs-l b{color:var(--ink);font-weight:800;font-size:15px;letter-spacing:-.02em}
+.vs-row{display:flex;gap:10px;flex:1;justify-content:space-between;overflow:hidden}
+.vs-a{display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:18px;border:1px solid transparent;transition:border-color .3s,transform .4s var(--ease),opacity .8s var(--ease)}
+.vs-a:hover{border-color:var(--line2);transform:translateY(-3px)}
+.vs-a b{font-size:15px;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+.vs-a [data-app]{width:38px;height:38px;animation:bob 4s ease-in-out infinite}
+.vs-a:nth-child(2) [data-app]{animation-delay:-.7s}.vs-a:nth-child(3) [data-app]{animation-delay:-1.4s}.vs-a:nth-child(4) [data-app]{animation-delay:-2.1s}.vs-a:nth-child(5) [data-app]{animation-delay:-2.8s}.vs-a:nth-child(6) [data-app]{animation-delay:-3.5s}
+.vs-a.soon{opacity:.45}.vs-a.soon.in{opacity:.45}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* scroll statement */
+.say{padding-block:120px 40px}
+.say-t{margin:0;font-weight:800;font-size:clamp(34px,5.6vw,76px);line-height:1.02;letter-spacing:-.06em;max-width:1050px;text-wrap:balance}
+.say-t .w{color:#DEDACF;transition:color .35s}
+.say-t .w.on{color:var(--ink)}
+.say-t b .w.on{color:var(--ink);text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.12em;text-decoration-color:var(--usdt)}
+
+/* family orbit */
+.fam{overflow:hidden}
+.fam-in{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;align-items:center}
+.fam-feed{display:grid;gap:8px;margin-top:26px;max-width:420px;min-height:172px;align-content:start}
+.ff{display:flex;align-items:center;gap:12px;background:var(--ink2);border:1px solid var(--ink3);border-radius:16px;padding:9px 14px 9px 9px;animation:ffIn .6s var(--ease) both}
+.ff [data-app]{width:30px;height:30px}
+.ff div{display:grid;line-height:1.25;min-width:0}.ff div b{font-size:14px;color:#fff}.ff div small{font-size:12px;color:#948F82}
+.ff .v{margin-left:auto;font-weight:800;color:#4BC994;font-size:14px;white-space:nowrap}
+@keyframes ffIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:none}}
+.orbit{position:relative;aspect-ratio:1;width:100%;max-width:540px;justify-self:center}
+.o-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.o-lines line{stroke:rgba(255,255,255,.12);stroke-width:.25;stroke-dasharray:.8 1.2;vector-effect:non-scaling-stroke}
+.o-lines line.hot{stroke:rgba(255,255,255,.55)}
+.o-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.08);left:50%;top:50%;transform:translate(-50%,-50%)}
+.o-ring.r1{width:76%;height:76%;animation:spinR 60s linear infinite;border-style:dashed}
+.o-ring.r2{width:44%;height:44%;box-shadow:0 0 120px 10px rgba(255,255,255,.04) inset}
+@keyframes spinR{to{transform:translate(-50%,-50%) rotate(1turn)}}
+.o-core{position:absolute;left:50%;top:50%;width:22%;transform:translate(-50%,-50%);filter:drop-shadow(0 20px 40px rgba(0,0,0,.6));z-index:3;transition:transform .25s var(--ease)}
+.o-core.hit{transform:translate(-50%,-50%) scale(1.08)}
+.o-core svg{display:block;width:100%}
+.o-core::after{content:"";position:absolute;inset:-14%;border-radius:32%;border:2px solid rgba(255,255,255,.5);opacity:0}
+.o-core.hit::after{animation:ringOut .9s var(--ease)}
+@keyframes ringOut{from{opacity:.9;transform:scale(.85)}to{opacity:0;transform:scale(1.5)}}
+.o-app{position:absolute;width:15%;transform:translate(-50%,-50%);z-index:2;display:grid;justify-items:center;gap:6px}
+.o-app [data-app]{width:100%;height:auto;aspect-ratio:1;filter:drop-shadow(0 12px 24px rgba(0,0,0,.5));transition:transform .3s var(--ease)}
+.o-app.go [data-app]{transform:scale(1.12)}
+.o-app small{font-size:11px;font-weight:700;color:#948F82;white-space:nowrap}
+.o-coin{position:absolute;width:3.2%;aspect-ratio:1;border-radius:50%;z-index:2;transform:translate(-50%,-50%);box-shadow:0 0 18px 3px currentColor;pointer-events:none}
+.o-wallet{position:absolute;left:50%;bottom:-2%;transform:translateX(-50%);background:#fff;color:var(--ink);border-radius:18px;padding:10px 16px;display:grid;justify-items:center;z-index:3;box-shadow:0 20px 40px -10px rgba(0,0,0,.6);transition:transform .3s var(--ease)}
+.o-wallet small{font-size:10px;font-weight:800;letter-spacing:.14em;color:var(--mut2)}
+.o-wallet b{font-size:22px;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.o-wallet.bump{transform:translateX(-50%) scale(1.06)}
+
+/* developer */
+.dev-in{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:center}
+.dsteps{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:8px}
+.dsteps li{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:18px;border:1px solid transparent;transition:all .4s var(--ease);opacity:.5}
+.dsteps li.on{opacity:1;background:var(--card);border-color:var(--line);box-shadow:0 14px 30px -20px rgba(18,17,16,.35)}
+.dsteps li>span{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.dsteps li div{display:grid}.dsteps b{font-size:16px;letter-spacing:-.02em}.dsteps small{color:var(--mut);font-size:14px}
+.code-win{position:relative;background:#121110;border-radius:26px;border:1px solid #2C2925;box-shadow:0 40px 80px -30px rgba(18,17,16,.55);overflow:hidden;min-width:0}
+.cw-h{display:flex;align-items:center;gap:7px;padding:14px 16px;border-bottom:1px solid #2C2925}
+.cw-h>i{width:10px;height:10px;border-radius:50%;background:#3A3732}
+.cw-tabs{margin-left:14px;display:flex;gap:4px}
+.cw-tabs button{border:0;background:none;color:#6E695E;font:600 12.5px var(--mono);padding:6px 10px;border-radius:8px;cursor:pointer}
+.cw-tabs button.on{background:#2C2925;color:#fff}
+.cw-b{margin:0;padding:22px 22px 90px;color:#E6E2D8;font:13.5px/1.75 var(--mono);min-height:330px;white-space:pre-wrap;word-break:break-word}
+.cw-b .k{color:#fff;font-weight:700}.cw-b .s{color:#7FD4B0}.cw-b .c{color:#6E695E}.cw-b .f{color:#F7B267}
+.cw-b .cur{display:inline-block;width:8px;height:1.1em;background:#fff;vertical-align:-3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.cw-toast{position:absolute;left:18px;right:18px;bottom:18px;display:flex;gap:12px;align-items:center;background:#fff;color:var(--ink);border-radius:16px;padding:12px 14px;transform:translateY(130%);transition:transform .6s var(--ease)}
+.cw-toast.on{transform:none}
+.cw-toast .ok{width:30px;height:30px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-weight:800;flex:none}
+.cw-toast div{display:grid;line-height:1.3}.cw-toast b{font:700 13px var(--mono)}.cw-toast small{color:var(--mut);font-size:13px}
+
+/* numbers */
+.nums{border-block:1px solid var(--line);background:var(--card);margin-bottom:110px}
+.nums-in{display:grid;grid-template-columns:repeat(4,1fr)}
+.nums .n{padding:40px 24px;display:grid;gap:8px;border-right:1px solid var(--line)}
+.nums .n:last-child{border-right:0}
+.nums .n b{font-size:clamp(48px,6vw,84px);font-weight:800;letter-spacing:-.07em;line-height:.9;display:flex;align-items:baseline;gap:6px;font-variant-numeric:tabular-nums}
+.nums .n b small{font-size:.32em;letter-spacing:-.02em;color:var(--mut2)}
+.nums .n>span{color:var(--mut);font-size:14.5px;max-width:220px}
+
+/* footer v2 */
+footer{padding-block:64px 120px;border-top:1px solid var(--line)}
+footer .wrap.ft{display:grid;grid-template-columns:minmax(0,1fr);gap:40px;width:100%}
+.ft-top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.ft-top .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.ft-top .brand svg{width:40px;height:40px}
+.ft-big{margin:0;font-size:clamp(36px,6vw,80px);font-weight:800;letter-spacing:-.065em;line-height:.9;color:var(--line2)}
+.ft-fam{display:grid;gap:14px}
+.ft-l{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.ft-apps{display:flex;flex-wrap:wrap;gap:10px}
+.ft-apps span{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:6px 12px 6px 6px;font-weight:700;font-size:14px;letter-spacing:-.02em;transition:transform .3s var(--ease)}
+.ft-apps span:hover{transform:translateY(-2px)}
+.ft-apps [data-app]{width:26px;height:26px}
+.ft-bot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;align-items:center;color:var(--mut);font-size:14px;padding-top:24px;border-top:1px solid var(--line)}
+footer .vsq [data-app]{width:24px;height:24px}
+footer .vsq b{font-weight:800;letter-spacing:-.03em}footer .vsq b em{font-style:normal;color:#00A86B}
+footer .vsq i:not([data-app]){display:none}
+
+@media (max-width:980px){
+  .fam-in,.dev-in{grid-template-columns:1fr}
+  .orbit{max-width:440px}
+  .nums-in{grid-template-columns:1fr 1fr}
+  .nums .n:nth-child(2){border-right:0}.nums .n:nth-child(-n+2){border-bottom:1px solid var(--line)}
+}
+@media (max-width:760px){
+  .vs-in{flex-direction:column;align-items:flex-start;gap:12px}
+  .vs-l{border-right:0;padding-right:0}
+  .vs-row{width:100%;overflow-x:auto;justify-content:flex-start;scrollbar-width:none;margin-inline:-20px;padding-inline:20px;width:calc(100% + 40px)}
+  .vs-row::-webkit-scrollbar{display:none}
+  .say{padding-block:80px 10px}
+  .cw-b{font-size:12px;padding:18px 16px 90px;min-height:300px}
+  .nums .n{padding:28px 16px}
+  .o-app small{display:none}
+  .fam-feed{min-height:112px}
+}
+@media (prefers-reduced-motion:reduce){[data-rv]{opacity:1;transform:none}.it{animation:none!important}}
+</style>
+
+<div class="bar"><span class="tag">COMING SOON</span>The checkout behind the Voo family. <a href="#waitlist">Get on the list →</a></div>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#" aria-label="Gatevoo home"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#121110"/><path class="g-arc" pathLength="100" d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle class="g-dot" cx="32.4" cy="32" r="3.3" fill="#fff"/></svg><span class="word">Gate<span>voo</span></span></a>
+    <nav class="links" aria-label="Main"><a href="#how">How it works</a><a href="#family">Voo apps</a><a href="#dev">Developers</a><a href="#compare">Compare</a><a href="#faq">FAQ</a></nav>
+    <a class="btn btn-main btn-sm" href="#waitlist" style="padding:6px 6px 6px 16px">Join waitlist <span class="arr" style="width:32px;height:32px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      <span class="live"><b><i></i>Soon</b>USDT and Bitcoin, straight to your wallet</span>
+      <h1 class="h1"><span class="ln"><span>Open the gate.</span></span><span class="ln"><span class="it">Get paid in a minute.</span></span></h1>
+      <p class="lede fade">One checkout for your <b>website</b>, your <b>links</b> and your <b>chats</b>. Your customer pays in crypto. The money lands in <b>your wallet</b>. The order unlocks itself.</p>
+      <div class="ctas fade">
+        <a class="btn btn-main" href="#waitlist">Join the waitlist <span class="arr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+        <a class="btn btn-ghost" href="#how"><span class="pl"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>Watch a payment</a>
+      </div>
+      <ul class="ticks fade">
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Straight to your wallet</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>No business paperwork</li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Zero chargebacks</li>
+      </ul>
+    </div>
+    <div class="cine" id="cine" data-mode="web" aria-label="Animation: a customer slides to send 49.13 USDT, the coins stream across, and the online store or Telegram chat shows the order as paid">
+      <div class="cgrid" aria-hidden="true"></div>
+      <canvas id="beam" aria-hidden="true"></canvas>
+      <div class="chipx tl" aria-hidden="true"><span class="ldot"></span><span id="cTimer">00:00</span><em>TRON · confirming</em></div>
+      <div class="chipx tr" id="balChip" aria-hidden="true"><small>Your wallet</small><b id="cBal">$1,203.00</b></div>
+      <div class="dev d1" id="dev1" aria-hidden="true">
+        <div class="dscr wallet">
+          <div class="wtop"><span>Send</span><b>USDT</b><small>TRC20</small></div>
+          <div class="wamt"><b id="wAmt">0.00</b><small>≈ $<span id="wUsd">0.00</span></small></div>
+          <div class="wto"><small>To</small><b id="wTo">GlowLabs · TLsV…hUzy</b></div>
+          <div class="wfee"><span>Network fee</span><span>≈ 1.1 TRX</span></div>
+          <div class="wslide"><span class="wfill" id="wFill"></span><span class="wknob" id="wKnob"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><span class="wlb">Slide to send</span></div>
+          <div class="wsent" id="wSent"><span class="ok"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Sent</b><small>49.13 USDT</small></div>
+        </div>
+        <span class="tagdev" id="tag1">Customer · Lagos</span>
+      </div>
+      <div class="dev d2" id="dev2" aria-hidden="true">
+        <div class="dscr web">
+          <div class="ubar"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>glowlabs.shop/checkout</div>
+          <div class="shop"><b>GlowLabs</b><span>Cart · 1 item</span></div>
+          <div class="prod"><span class="pimg"></span><div><b>Vitamin C Serum</b><small>30 ml · Qty 1</small></div><span>$49.00</span></div>
+          <div class="tot"><span>Total</span><b>$49.00</b></div>
+          <div class="pbtn"><svg width="13" height="13" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#fff"/><path d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#121110" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32.4" cy="32" r="3.3" fill="#26A17B"/></svg>Pay with crypto</div>
+          <div class="cards"><span>Card</span><span>Bank</span></div>
+          <div class="ordok" id="ordOk"><span class="ok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Order confirmed</b><small>#1043 · Paid 49.13 USDT</small><i>Receipt sent to your email</i></div>
+        </div>
+        <div class="dscr tg">
+          <div class="tghd"><span class="av">VIP</span><div><b>Ada's VIP Signals</b><small id="tgs">online</small></div></div>
+          <div class="tgw">
+            <div class="m th">How much for VIP? 🙏</div>
+            <div class="m me">$49 for 30 days 👇<span class="lc"><b>Gatevoo · Pay $49</b><i>USDT or Bitcoin</i></span></div>
+            <div class="sysp" id="sysp"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>PAID · 49.13 USDT</div>
+            <div class="m me hidden" id="m3"></div>
+          </div>
+        </div>
+        <span class="tagdev" id="tag2">Your online store</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="vstrip" aria-label="Made for the Voo family">
+  <div class="wrap vs-in">
+    <span class="vs-l">Made for the<br><b>Voo family</b></span>
+    <div class="vs-row" id="vsRow">
+      <span class="vs-a" data-rv><i data-app="joinvoo"></i><b>Joinvoo</b></span>
+      <span class="vs-a" data-rv><i data-app="replyvoo"></i><b>Replyvoo</b></span>
+      <span class="vs-a" data-rv><i data-app="castvoo"></i><b>Castvoo</b></span>
+      <span class="vs-a" data-rv><i data-app="advoo"></i><b>Advoo</b></span>
+      <span class="vs-a" data-rv><i data-app="affleego"></i><b>Affleego</b></span>
+      <span class="vs-a soon" data-rv><i data-app="landvoo"></i><b>Landvoo</b></span>
+    </div>
+  </div>
+</section>
+
+<div class="mega" aria-label="Accepted now: USDT and Bitcoin. Coming soon: USDC, Ethereum and Solana.">
+  <div class="row" aria-hidden="true" id="mega"></div>
+</div>
+
+
+<section class="block" id="talk">
+  <div class="wrap talk">
+    <div class="lead">
+      <span class="eyebrow">Ask around</span>
+      <h2 class="h2" style="margin-top:8px">Every seller asks it. <span class="it">Here's the answer.</span></h2>
+      <p>“How do I accept crypto?” It comes up in every seller group. Watch it get answered, and paid, before anyone leaves the chat.</p>
+      <div class="who"><span><i>👩🏾</i>Ada · runs GlowLabs</span><span><i>🧔🏿</i>Tunde · already uses Gatevoo</span></div>
+    </div>
+    <div class="chatbox" aria-label="Animated chat: Ada asks how to accept crypto on her website, Tunde recommends Gatevoo, and a payment completes in the chat">
+      <div class="cb-h"><span class="avs"><i>👩🏾</i><i>🧔🏿</i></span><div><b>Sellers in Lagos</b><small id="cbSt">online</small></div><button class="rp" id="cbReplay" type="button">Replay</button></div>
+      <div class="cb-b" id="cbB"></div>
+    </div>
+  </div>
+</section>
+
+
+<section class="say" id="say" aria-label="Your customer is ready to pay. Their card isn't. Their bank isn't. Gatevoo is.">
+  <div class="wrap"><p class="say-t" id="sayT" aria-hidden="true">Your customer is ready to pay. Their card isn't. Their bank isn't. <b>Gatevoo is.</b></p></div>
+</section>
+
+<section class="block dark" id="blind">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow light">The blind spot</span><h2 class="h2">Your customer has the money. <span class="it">Your checkout says no.</span></h2>
+      <p class="sub">Sell online from Africa and your own payment tools fight you. Every failed payment is a customer gone.</p></div>
+    <div class="pains">
+      <article class="pain">
+        <div class="demo"><div class="decl"><div class="r"><span>Visa •• 4417</span><span>$49.00</span></div><div class="x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>Payment declined</div></div></div>
+        <h3 class="h3">Cards get declined</h3><p>International cards fail, banks block foreign merchants, and the customer gives up halfway.</p>
+      </article>
+      <article class="pain">
+        <div class="demo"><div class="frozen"><b>$12,480.00</b><span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2v20M4 6l16 12M20 6L4 18"/></svg>Payout on hold</span></div></div>
+        <h3 class="h3">Money gets held</h3><p>Gateways that hold your balance can pause payouts, freeze accounts, or take days to settle.</p>
+      </article>
+      <article class="pain">
+        <div class="demo"><div class="docs"><span>Company registration</span><span>Director IDs</span><span>Proof of address</span><span>Shareholders</span><span>Website review</span><span>Bank letter</span></div></div>
+        <h3 class="h3">Paperwork before you sell</h3><p>Business verification can take weeks, and selling in some niches gets you refused anyway.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="fix">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">The fix</span><h2 class="h2">Gatevoo takes the no <span class="it">out of checkout.</span></h2>
+      <p class="sub">Crypto goes from your customer's wallet to yours. Nobody sits in the middle holding it. Nobody can decline it.</p></div>
+    <div class="fix">
+      <div class="tile wide">
+        <div style="display:grid;gap:12px"><h3 class="h3">Your keys. Your wallet. Your money.</h3><p>Gatevoo only watches your public address. It never holds funds and never sees a private key, so nobody can freeze, hold back or drain what you earn.</p></div>
+        <svg class="keyart" viewBox="0 0 150 150" aria-hidden="true"><g class="spin"><circle cx="75" cy="75" r="68" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-dasharray="3 8"/><circle cx="75" cy="7" r="6" fill="#26A17B"/><circle cx="143" cy="75" r="5" fill="#F7931A"/></g><circle cx="75" cy="75" r="44" fill="#1E1C19" stroke="#fff" stroke-width="2"/><path d="M89.14 58.15A22 22 0 1 0 97 75H86.7" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="75.6" cy="75" r="4.6" fill="#26A17B"/></svg>
+      </div>
+      <div class="tile"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><h3 class="h3">Paid in about a minute</h3><p>USDT on TRON confirms in about a minute. Bitcoin after one block. Your app unlocks the order by itself.</p></div>
+      <div class="tile"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg></span><h3 class="h3">No mix-ups</h3><p>Every checkout gets its own exact amount, so two people paying at once are always told apart. Wrong amounts go to a review list.</p></div>
+      <div class="tile"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg></span><h3 class="h3">Works everywhere</h3><div class="where"><span>Your website</span><span>Pop-up checkout</span><span>Payment links</span><span>Telegram</span><span>WhatsApp</span><span>Email</span></div></div>
+      <div class="tile"><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></span><h3 class="h3">Never miss a sale</h3><p>If your site is down when a payment lands, Gatevoo keeps telling it for 24 hours until it answers.</p></div>
+    </div>
+  </div>
+</section>
+
+<div id="how"><section class="film" id="film" aria-label="A full payment, played like a video">
+  <div class="wrap lead"><span class="eyebrow light">Follow one payment</span><h2 class="h2" style="color:#fff">Click to paid. <em class="it">Under a minute.</em></h2></div>
+  <div class="pin">
+    <div class="wrap inner">
+      <div>
+        <div class="caps" id="caps">
+          <div class="cap on"><span class="k">01 · THE CLICK</span><h3>It starts at <em>checkout.</em></h3><p>Your customer taps “Pay with crypto” on your website, or opens a Gatevoo link you sent in Telegram, WhatsApp or email. No account needed.</p></div>
+          <div class="cap"><span class="k">02 · THE CHECKOUT</span><h3>One tap. <em>Pick a coin.</em></h3><p>Your brand, the exact amount and a QR code. USDT or Bitcoin, from any wallet or exchange.</p></div>
+          <div class="cap"><span class="k">03 · THE MONEY</span><h3>Money moves <em>straight to you.</em></h3><p>The coins go from their wallet to yours. Gatevoo never touches them. It only watches the blockchain.</p></div>
+          <div class="cap"><span class="k">04 · PAID</span><h3>Order confirmed. <em>Instantly.</em></h3><p>Confirmed in about a minute. Your site marks the order paid, the customer gets a receipt, and your dashboard ticks up.</p></div>
+        </div>
+        <div class="player">
+          <button class="pp" id="pp" type="button" aria-label="Pause"><svg id="ppI" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+          <div class="chapters" id="chap"><button type="button">1 · Click<i></i></button><button type="button">2 · Checkout<i></i></button><button type="button">3 · Money<i></i></button><button type="button">4 · Paid<i></i></button></div>
+        </div>
+      </div>
+
+      <div class="set" id="set">
+        <div class="receiver" id="rcv"><small>YOUR WALLET</small><b id="rcvAmt">$1,203.00</b><div class="who"><i>G</i>GlowLabs · your wallet</div></div>
+        <div class="dash" id="dash"><small>DASHBOARD · TODAY</small><b id="dashAmt">+$49.00</b>
+          <svg viewBox="0 0 200 46" preserveAspectRatio="none"><path class="ln" d="M0 40 L25 36 L50 38 L75 28 L100 31 L125 22 L150 25 L175 14 L200 4" fill="none" stroke="#26A17B" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
+        <div class="device">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="scr" id="s-chat">
+              <div class="fweb">
+                <div class="ubar">glowlabs.shop/checkout</div>
+                <div class="shop"><b>GlowLabs</b><span>Secure checkout</span></div>
+                <div class="prod"><span class="pimg"></span><div><b>Vitamin C Serum</b><small>30 ml · Qty 1</small></div><span>$49.00</span></div>
+                <div class="tot"><span>Delivery</span><span>Free</span></div>
+                <div class="tot"><span>Total</span><b>$49.00</b></div>
+                <div class="pbtn" data-at=".1">Pay with crypto</div>
+                <div class="cards"><span>Card</span><span>Bank transfer</span></div>
+                <div class="tap" data-at=".08" aria-hidden="true"></div>
+                <div class="ordok" data-at=".79"><span class="ok"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Order confirmed</b><small>#1043 · Paid 49.13 USDT</small><i>Receipt sent · ships tomorrow</i></div>
+              </div>
+            </div>
+            <div class="scr off-r co" id="s-co">
+              <div class="mh"><span><i>G</i>GlowLabs</span><span style="color:var(--muted);font-weight:500">Gatevoo</span></div>
+              <div class="amt">$49.00<small>Vitamin C Serum</small></div>
+              <div class="opt" id="optU"><span class="c" style="background:var(--usdt)">₮</span><div>USDT<small>TRON (TRC20)</small></div></div>
+              <div class="opt"><span class="c" style="background:var(--btc)">₿</span><div>Bitcoin<small>Bitcoin network</small></div></div>
+              <div class="qrw" id="qrw"><canvas id="qr" width="29" height="29"></canvas><div><small>SEND EXACTLY</small><b>49.13 USDT</b><span class="cd"><i></i>Waiting · 29:41</span></div></div>
+            </div>
+            <div class="scr off-r wl" id="s-wal">
+              <div class="wh">Your wallet · Send USDT</div>
+              <div class="big" id="walAmt" style="margin-top:22px">0.00<small>USDT · TRC20</small></div>
+              <div class="to" style="margin-top:18px">To<b>TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy</b></div>
+              <div class="to" style="margin-top:8px">Network fee<b>≈ 1.10 TRX</b></div>
+              <div class="slide"><span class="fill" id="sFill"></span><span class="knob" id="sKnob">→</span><span class="lb">Slide to send</span></div>
+              <div class="sent" id="sent"><span class="ok"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><b>Sent</b><small style="color:#8FB3A4">49.13 USDT</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="coinlane" id="lane"></div>
+      </div>
+    </div>
+  </div>
+</section></div>
+
+
+<section class="block dark fam" id="family">
+  <div class="wrap fam-in">
+    <div class="head">
+      <span class="eyebrow light">The Voo family</span>
+      <h2 class="h2">One gate. <span class="it">Every Voo app.</span></h2>
+      <p class="sub">Joinvoo, Replyvoo, Castvoo, Advoo and Affleego all check out through the same gate. Every payment ends up in one place: your wallet.</p>
+      <div class="fam-feed" id="famFeed" aria-live="off"></div>
+    </div>
+    <div class="orbit" id="orbit" aria-hidden="true">
+      <svg class="o-lines" id="oLines" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div class="o-ring r1"></div><div class="o-ring r2"></div>
+      <div class="o-core" id="oCore"><svg viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="#fff"/><path d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#121110" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle id="oDot" cx="32.4" cy="32" r="3.3" fill="#121110"/></svg></div>
+      <div class="o-wallet" id="oWallet"><small>YOUR WALLET</small><b id="oBal">$12,480.00</b></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="dashboard">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">Your dashboard</span><h2 class="h2">Every dollar, <span class="it">the second it lands.</span></h2>
+      <p class="sub">Every Voo app and every link in one view. Money arrives live, links take seconds, and Gia answers questions about your sales.</p></div>
+    <div class="dash-prev" aria-label="Example dashboard with sample payments">
+      <div class="dp-side">
+        <div class="it2 on"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/></svg>Home</div>
+        <div class="it2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Payments</div>
+        <div class="it2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>Links</div>
+        <div class="it2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1.5 1.3 4.5 1.3 6 0"/></svg>Ask Gia</div>
+        <div class="bal"><small>TODAY</small><b class="tnum" id="dpToday">$1,203.00</b><span style="font-size:12px;color:var(--ok);font-weight:800" id="dpDelta">+$0.00 just now</span></div>
+      </div>
+      <div class="dp-main">
+        <div class="dp-kpis">
+          <div class="dp-k hi"><small>This week</small><b class="tnum" id="dpWeek">$8,412.50</b></div>
+          <div class="dp-k"><small>Payments</small><b class="tnum" id="dpCount">171</b></div>
+          <div class="dp-k"><small>Waiting now</small><b class="tnum">3</b></div>
+        </div>
+        <div class="dp-list" id="dpList"></div>
+      </div>
+      <div class="dp-badge" id="dpBadge"><i></i><span id="dpBadgeT">New payment</span></div>
+    </div>
+    <p style="color:var(--mut2);font-size:13px;margin:12px 0 0">Example dashboard with sample payments.</p>
+  </div>
+</section>
+
+<section class="block" id="dev">
+  <div class="wrap dev-in">
+    <div class="head">
+      <span class="eyebrow">For developers</span>
+      <h2 class="h2">One line on your site. <span class="it">Paid by lunch.</span></h2>
+      <p class="sub">Drop in the button, point Gatevoo at your server, and every paid order unlocks itself. Signed, retried and logged.</p>
+      <ol class="dsteps" id="dSteps">
+        <li class="on"><span>1</span><div><b>Paste your wallet</b><small>Public addresses only. Never a seed phrase.</small></div></li>
+        <li><span>2</span><div><b>Add the button</b><small>Opens the checkout as a pop-up on any page.</small></div></li>
+        <li><span>3</span><div><b>Unlock the order</b><small>Your server hears “paid” and does the rest.</small></div></li>
+      </ol>
+    </div>
+    <div class="code-win" aria-label="Example code: a pay button on your website and a webhook that unlocks the order">
+      <div class="cw-h"><i></i><i></i><i></i><div class="cw-tabs"><button type="button" class="on" data-tab="0">checkout.html</button><button type="button" data-tab="1">server.js</button></div></div>
+      <pre class="cw-b" id="cwB"></pre>
+      <div class="cw-toast" id="cwToast"><span class="ok">✓</span><div><b>invoice.paid</b><small>49.13 USDT · order #1043 unlocked</small></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="nums" id="nums" aria-label="Gatevoo in numbers">
+  <div class="wrap nums-in">
+    <div class="n" data-rv><b><span data-to="1">0</span><small>min</small></b><span>for a USDT payment to confirm, give or take</span></div>
+    <div class="n" data-rv><b><small>$</small><span data-to="0">0</span></b><span>of your money Gatevoo ever holds</span></div>
+    <div class="n" data-rv><b><span data-to="24">0</span><small>h</small></b><span>we keep telling your site until it hears us</span></div>
+    <div class="n" data-rv><b><span data-to="0">0</span><small>docs</small></b><span>needed to start taking payments</span></div>
+  </div>
+</section>
+
+
+<section class="block" id="compare" style="padding-top:0">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">Compare</span><h2 class="h2">Built for sellers <span class="it">others turn away.</span></h2></div>
+    <div class="cmp" role="table" aria-label="Gatevoo compared with a typical payment gateway">
+      <div class="r hd" role="row"><div role="columnheader"></div><div role="columnheader">Gatevoo</div><div role="columnheader">Typical gateway</div></div>
+      <div class="r" role="row"><div>Who holds your money</div><div><span class="yes">●</span>You, in your wallet</div><div class="no">The gateway, until payout</div></div>
+      <div class="r" role="row"><div>Business documents to start</div><div><span class="yes">●</span>None</div><div class="no">Usually required</div></div>
+      <div class="r" role="row"><div>Chargebacks</div><div><span class="yes">●</span>None, crypto is final</div><div class="no">Yes, on card payments</div></div>
+      <div class="r" role="row"><div>Payout time</div><div><span class="yes">●</span>Instant, it's already yours</div><div class="no">Days, sometimes held</div></div>
+      <div class="r" role="row"><div>Can freeze your balance</div><div><span class="yes">●</span>No</div><div class="no">Yes</div></div>
+    </div>
+    <small style="display:block;color:var(--mut2);font-size:12.5px;margin-top:10px">"Typical gateway" describes common card and custodial crypto processors. Each provider's terms differ.</small>
+  </div>
+</section>
+
+<section class="block" id="waitlist" style="padding-top:0">
+  <div class="wrap">
+    <div class="join">
+      <div>
+        <span class="eyebrow light">Early access</span>
+        <h2 class="h2" style="margin-top:8px">Get through <span class="it">the gate first.</span></h2>
+        <p class="sub">Gatevoo is invite-only while it's built into our own apps. Join the list and we'll message you when your spot opens.</p>
+        <ul class="perks">
+          <li><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div>First in when spots open<small>Waitlist members get invited before anyone else.</small></div></li>
+          <li><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div>More ways to pay are coming<small>USDC, Ethereum, Solana and cards.</small></div></li>
+          <li><span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div>Setup done with you<small>We connect your website or bot together.</small></div></li>
+        </ul>
+      </div>
+      <form class="form" id="wlForm" novalidate>
+        <div id="wlFields" style="display:grid;gap:16px">
+          <div class="field"><label for="wl-email">Email</label><input class="input" id="wl-email" name="email" type="email" autocomplete="email" placeholder="you@business.com" required></div>
+          <div class="two">
+            <div class="field"><label for="wl-name">Your name</label><input class="input" id="wl-name" name="name" autocomplete="name" placeholder="Ada Okafor"></div>
+            <div class="field"><label for="wl-tg">Telegram</label><input class="input" id="wl-tg" name="telegram" placeholder="@yourhandle"></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="wl-biz">What do you sell?</label><select class="input" id="wl-biz" name="business"><option value="">Choose one</option><option>Online store</option><option>Software or SaaS</option><option>Telegram community or signals</option><option>Courses or coaching</option><option>Agency or services</option><option>Something else</option></select></div>
+            <div class="field"><label for="wl-vol">Monthly sales</label><select class="input" id="wl-vol" name="volume"><option value="">Choose one</option><option>Under $1,000</option><option>$1,000 to $10,000</option><option>$10,000 to $50,000</option><option>Over $50,000</option></select></div>
+          </div>
+          <div class="hp" aria-hidden="true"><label for="wl-site">Website</label><input id="wl-site" name="website" tabindex="-1" autocomplete="off"></div>
+          <p class="err" id="wlErr" hidden></p>
+          <button class="btn btn-main" type="submit" id="wlBtn">Join the waitlist <span class="arr" style="background:var(--ink);color:#fff;border:1.5px solid #fff"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+          <p class="fine">We only use your details to contact you about Gatevoo access. No spam, and you can ask us to delete them at any time.</p>
+        </div>
+        <div class="done" id="wlDone" hidden><div class="bigok"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h3 id="wlTitle">You're on the list.</h3><p id="wlMsg">We'll email you when your spot opens.</p></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="faq" style="padding-top:0">
+  <div class="wrap">
+    <div class="head"><span class="eyebrow">FAQ</span><h2 class="h2">Questions? <span class="it">Straight answers.</span></h2></div>
+    <div class="faq">
+      <details><summary>Does Gatevoo hold my money?<i>+</i></summary><p>No. Customers pay straight into your own wallet. Gatevoo only watches your public address to see when a payment lands, so it can never spend, hold or freeze your funds.</p></details>
+      <details><summary>Do I need a registered company?<i>+</i></summary><p>No. You add your wallet address and start. Because Gatevoo never holds money, there is no business verification step to get going.</p></details>
+      <details><summary>Which coins can customers pay with?<i>+</i></summary><p>USDT on TRON (TRC20) and Bitcoin today. USDC, Ethereum, Solana and cards are on the way.</p></details>
+      <details><summary>How fast is a payment confirmed?<i>+</i></summary><p>USDT usually confirms in about a minute. Bitcoin confirms after one block, which averages about 10 minutes. The checkout shows the customer each step as it happens.</p></details>
+      <details><summary>What if a customer sends the wrong amount?<i>+</i></summary><p>Overpayments are matched and flagged so you can refund the extra. Short or unclear payments go to a review list in your dashboard, where you match them in one tap. Nothing is lost.</p></details>
+      <details><summary>Will it work on my website?<i>+</i></summary><p>Yes. Add a Pay with crypto button that opens the checkout as a pop-up, or send customers to a payment link. Your site is told the moment a payment confirms so it can unlock the order.</p></details>
+      <details><summary>When can I use it?<i>+</i></summary><p>Gatevoo is being built into Zedapex's own apps first. Join the waitlist and we'll invite you as spots open.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap ft">
+    <div class="ft-top">
+      <a class="brand" href="#" aria-label="Gatevoo home"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#121110"/><path d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32.4" cy="32" r="3.3" fill="#fff"/></svg><span class="word">Gate<span>voo</span></span></a>
+      <p class="ft-big">Get paid in a minute.</p>
+    </div>
+    <div class="ft-fam">
+      <span class="ft-l">The Voo family</span>
+      <div class="ft-apps"><span><i data-app="joinvoo"></i>Joinvoo</span><span><i data-app="replyvoo"></i>Replyvoo</span><span><i data-app="castvoo"></i>Castvoo</span><span><i data-app="advoo"></i>Advoo</span><span><i data-app="affleego"></i>Affleego</span><span><i data-app="landvoo"></i>Landvoo</span></div>
+    </div>
+    <div class="ft-bot">
+      <span>Gatevoo · A Zedapex product · Lagos</span>
+      <span class="vsq"><i data-app="voosquare"></i>Part of <b>Voo<em>Square</em></b></span>
+    </div>
+  </div>
+</footer>
+
+<button class="gia-btn" id="giaBtn" type="button" aria-expanded="false" aria-controls="gia"><span class="gia-face" aria-hidden="true"><i></i><i></i></span><span class="lb">Ask Gia</span></button>
+<section class="gia" id="gia" role="dialog" aria-label="Gia, the Gatevoo assistant">
+  <div class="gia-h"><span class="gia-face" aria-hidden="true" style="width:34px;height:34px"><i></i><i></i></span><div><b>Gia</b><small>Gatevoo assistant · answers from our FAQ</small></div><button type="button" id="giaX" aria-label="Close">✕</button></div>
+  <div class="gia-b" id="giaB"><div class="gm g">Hi, I'm Gia 👋 Ask me how Gatevoo works, or pick a question below.</div></div>
+  <div class="gq" id="giaQ"></div>
+</section>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SVGNS = 'http://www.w3.org/2000/svg';
+
+  /* ───────── HERO: the send, the money stream, the "Paid" ───────── */
+  (function cine() {
+    const box = $('cine'), cv = $('beam'), ctx = cv.getContext('2d'), d1 = $('dev1'), d2 = $('dev2');
+    let W = 0, H = 0, dpr = 1, active = false, parts = [], coins = [], flashes = [], T = [];
+    const size = () => { const r = box.getBoundingClientRect(); dpr = Math.min(devicePixelRatio || 1, 2); W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+    size(); addEventListener('resize', size);
+    const anchors = () => {
+      const b = box.getBoundingClientRect(), r1 = d1.getBoundingClientRect(), r2 = d2.getBoundingClientRect();
+      const s = { x: r1.right - b.left - 14, y: r1.top - b.top + r1.height * .62 };
+      const e = { x: r2.left - b.left + 14, y: r2.top - b.top + r2.height * .5 };
+      const c = { x: (s.x + e.x) / 2, y: Math.min(s.y, e.y) - Math.max(70, (e.x - s.x) * .38) };
+      return { s, e, c };
+    };
+    const bz = (A, t) => { const u = 1 - t; return { x: u * u * A.s.x + 2 * u * t * A.c.x + t * t * A.e.x, y: u * u * A.s.y + 2 * u * t * A.c.y + t * t * A.e.y }; };
+    let visible = true;
+    new IntersectionObserver((e) => { visible = e[0].isIntersecting; }).observe(box);
+    let last = 0, spawnP = 0, spawnC = 0;
+    function frame(now) {
+      const dt = last ? Math.min(50, now - last) : 16; last = now;
+      if (visible) {
+        const A = anchors();
+        ctx.clearRect(0, 0, W, H);
+        // rail
+        ctx.save(); ctx.setLineDash([3, 7]); ctx.lineDashOffset = -now / 40; ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(A.s.x, A.s.y); ctx.quadraticCurveTo(A.c.x, A.c.y, A.e.x, A.e.y); ctx.stroke(); ctx.restore();
+        if (active) {
+          const g = ctx.createLinearGradient(A.s.x, 0, A.e.x, 0); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(38,161,123,.95)');
+          ctx.save(); ctx.shadowColor = 'rgba(255,255,255,.85)'; ctx.shadowBlur = 18; ctx.strokeStyle = g; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.moveTo(A.s.x, A.s.y); ctx.quadraticCurveTo(A.c.x, A.c.y, A.e.x, A.e.y); ctx.stroke(); ctx.restore();
+          spawnP += dt; while (spawnP > 14) { spawnP -= 14; parts.push({ t: 0, v: .0006 + Math.random() * .0006, o: (Math.random() - .5) * 26, r: .8 + Math.random() * 1.8, gold: Math.random() > .7 }); }
+          spawnC += dt; if (spawnC > 230) { spawnC = 0; coins.push({ t: 0, v: .00055 + Math.random() * .0002, o: (Math.random() - .5) * 18, rot: 0, s: Math.random() > .3 ? '₮' : '₿' }); }
+        }
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        for (let i = parts.length - 1; i >= 0; i--) {
+          const p = parts[i]; p.t += p.v * dt; if (p.t >= 1) { parts.splice(i, 1); continue; }
+          const q = bz(A, p.t), q0 = bz(A, Math.max(0, p.t - .04)), w = Math.sin(p.t * Math.PI);
+          const ox = p.o * w, a = Math.min(1, w * 1.6);
+          ctx.strokeStyle = p.gold ? `rgba(38,161,123,${a})` : `rgba(255,255,255,${a * .9})`; ctx.lineWidth = p.r; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(q0.x, q0.y + ox * .9); ctx.lineTo(q.x, q.y + ox); ctx.stroke();
+        }
+        ctx.restore();
+        for (let i = coins.length - 1; i >= 0; i--) {
+          const c = coins[i]; c.t += c.v * dt; if (c.t >= 1) { coins.splice(i, 1); flashes.push({ t: 0 }); continue; }
+          const q = bz(A, c.t), w = Math.sin(c.t * Math.PI), sc = .7 + w * .5; c.rot += dt * .006;
+          ctx.save(); ctx.translate(q.x, q.y + c.o * w); ctx.scale(Math.abs(Math.cos(c.rot)) * sc + .15, sc);
+          ctx.shadowColor = c.s === '₿' ? 'rgba(247,147,26,.8)' : 'rgba(38,161,123,.9)'; ctx.shadowBlur = 14;
+          ctx.fillStyle = c.s === '₿' ? '#F7931A' : '#26A17B'; ctx.beginPath(); ctx.arc(0, 0, 11, 0, 7); ctx.fill();
+          ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.5; ctx.stroke();
+          ctx.fillStyle = '#fff'; ctx.font = '700 12px Geist, system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(c.s, 0, 1);
+          ctx.restore();
+        }
+        for (let i = flashes.length - 1; i >= 0; i--) {
+          const f = flashes[i]; f.t += dt / 600; if (f.t >= 1) { flashes.splice(i, 1); continue; }
+          ctx.strokeStyle = `rgba(255,255,255,${.8 * (1 - f.t)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(A.e.x, A.e.y, 6 + f.t * 30, 0, 7); ctx.stroke();
+        }
+      }
+      if (!reduce) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // pointer parallax
+    if (!reduce && matchMedia('(pointer:fine)').matches) {
+      box.addEventListener('pointermove', (e) => { const r = box.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+        d1.style.setProperty('--rx', `${-y * 10}deg`); d1.style.setProperty('--ry', `${x * 14}deg`); d2.style.setProperty('--rx', `${-y * 10}deg`); d2.style.setProperty('--ry', `${x * 14}deg`); });
+      box.addEventListener('pointerleave', () => { [d1, d2].forEach((d) => { d.style.setProperty('--rx', '0deg'); d.style.setProperty('--ry', '0deg'); }); });
+    }
+
+    const tween = (ms, fn) => new Promise((res) => { const t0 = performance.now(); const st = (t) => { const p = Math.min(1, (t - t0) / ms); fn(1 - Math.pow(1 - p, 3)); if (p < 1) requestAnimationFrame(st); else res(); }; requestAnimationFrame(st); });
+    const wait = (ms) => new Promise((r) => T.push(setTimeout(r, ms)));
+    const money = (v) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    let bal = 1203, timerT = null;
+    const typeInto = async (el, text) => { const ch = [...text]; for (let i = 1; i <= ch.length; i++) { el.textContent = ch.slice(0, i).join(''); await wait(28); } };
+    let mode = 'tg';
+    const MODES = {
+      web: { to: 'GlowLabs · TLsV…hUzy', tag2: 'Your online store', tag1: 'Shopper · Accra' },
+      tg: { to: "Ada's VIP · TLsV…hUzy", tag2: 'Your Telegram group', tag1: 'Customer · Lagos' },
+    };
+    function reset() {
+      mode = mode === 'web' ? 'tg' : 'web'; box.dataset.mode = mode;
+      $('wTo').textContent = MODES[mode].to; $('tag2').textContent = MODES[mode].tag2; $('tag1').textContent = MODES[mode].tag1;
+      $('ordOk').classList.remove('on'); box.classList.remove('press');
+      $('wAmt').textContent = '0.00'; $('wUsd').textContent = '0.00'; $('wFill').style.width = '0%'; $('wKnob').style.transform = 'translateX(0)';
+      $('wSent').classList.remove('on'); $('sysp').classList.remove('on'); $('m3').classList.add('hidden'); $('m3').textContent = '';
+      $('tgs').textContent = 'online'; $('cTimer').textContent = '00:00'; box.classList.remove('paid', 'live'); clearInterval(timerT);
+    }
+    async function loop() {
+      T.forEach(clearTimeout); T = []; reset();
+      if (reduce) { $('ordOk').classList.add('on'); $('wAmt').textContent = '49.13'; $('wUsd').textContent = '49.13'; $('wSent').classList.add('on'); $('sysp').classList.add('on'); $('m3').textContent = "You're in 🎉 Here's your VIP link"; $('m3').classList.remove('hidden'); box.classList.add('paid'); return; }
+      await wait(300);
+      if (mode === 'web') { box.classList.add('press'); await wait(350); box.classList.remove('press'); }
+      await wait(200);
+      await tween(1100, (k) => { const v = (49.13 * k).toFixed(2); $('wAmt').textContent = v; $('wUsd').textContent = v; });
+      await wait(250);
+      const knobMax = () => Math.max(0, d1.querySelector('.wslide').clientWidth - 44);
+      await tween(800, (k) => { $('wFill').style.width = (k * 100) + '%'; $('wKnob').style.transform = `translateX(${k * knobMax()}px)`; });
+      $('wSent').classList.add('on'); active = true; box.classList.add('live');
+      let secs = 0; timerT = setInterval(() => { secs++; $('cTimer').textContent = `00:${String(secs).padStart(2, '0')}`; }, 95);
+      await wait(1700);
+      active = false; clearInterval(timerT); $('cTimer').textContent = '00:21';
+      await wait(700);
+      box.classList.add('paid'); $('sysp').classList.add('on'); $('ordOk').classList.add('on'); const from = bal; bal += 49.13;
+      tween(900, (k) => { $('cBal').textContent = money(from + 49.13 * k); });
+      $('balChip').classList.remove('pulse'); void $('balChip').offsetWidth; $('balChip').classList.add('pulse');
+      if (mode === 'tg') {
+        await wait(600); $('tgs').textContent = 'typing…'; await wait(900); $('tgs').textContent = 'online';
+        $('m3').classList.remove('hidden'); await typeInto($('m3'), "You're in 🎉 Here's your VIP link");
+      } else await wait(1800);
+      await wait(2800); loop();
+    }
+    loop();
+  })();
+
+  /* ───────── FILM: scroll-driven story ───────── */
+  (function qr() {
+    const c = $('qr'), x = c.getContext('2d'), N = 29; let s = 11; const r = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    x.fillStyle = '#fff'; x.fillRect(0, 0, N, N); x.fillStyle = '#0A1712';
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (r() > .52) x.fillRect(i, j, 1, 1);
+    for (const [a, b] of [[0, 0], [N - 7, 0], [0, N - 7]]) { x.fillStyle = '#fff'; x.fillRect(Math.max(a - 1, 0), Math.max(b - 1, 0), 9, 9); x.fillStyle = '#0A1712'; x.fillRect(a, b, 7, 7); x.fillStyle = '#fff'; x.fillRect(a + 1, b + 1, 5, 5); x.fillStyle = '#00B67A'; x.fillRect(a + 2, b + 2, 3, 3); }
+  })();
+  const film = $('film'), caps = [...document.querySelectorAll('.cap')], chaps = [...document.querySelectorAll('#chap button')];
+  const msgs = [...document.querySelectorAll('#s-chat [data-at]')];
+  const sChat = $('s-chat'), sCo = $('s-co'), sWal = $('s-wal'), lane = $('lane'), set = $('set');
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const seg = (p, a, b) => clamp((p - a) / (b - a));
+  let lastStep = -1, coinsFired = false, dashOn = false;
+
+  function countTo(el, a, b, pre = '$') {
+    const t0 = performance.now();
+    const step = (t) => { const p = Math.min(1, (t - t0) / 900), e = 1 - Math.pow(1 - p, 3); el.textContent = pre + (a + (b - a) * e).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function fireCoins() {
+    const sr = set.getBoundingClientRect(), rr = $('rcv').getBoundingClientRect();
+    const dx = rr.left + rr.width / 2 - (sr.left + sr.width / 2), dy = rr.top + rr.height / 2 - (sr.top + sr.height / 2);
+    for (let i = 0; i < 9; i++) {
+      const f = document.createElement('span');
+      const note = i % 3 === 1;
+      f.className = 'fly' + (note ? ' note' : '');
+      if (!note) f.style.background = '#26A17B';
+      f.textContent = note ? '$' : '₮';
+      lane.appendChild(f);
+      const lift = -80 - Math.random() * 60;
+      f.animate([
+        { transform: 'translate(0,40px) scale(.6)', opacity: 0 },
+        { transform: `translate(${dx * .45}px,${dy * .45 + lift}px) scale(1.05) rotate(${(Math.random() - .5) * 60}deg)`, opacity: 1, offset: .5 },
+        { transform: `translate(${dx}px,${dy}px) scale(.5)`, opacity: 0 },
+      ], { duration: 1100, delay: i * 90, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+      setTimeout(() => f.remove(), 1400 + i * 90);
+    }
+    setTimeout(() => { const r = $('rcv'); r.classList.remove('pulse'); void r.offsetWidth; r.classList.add('pulse'); countTo($('rcvAmt'), 1203, 1252.13); }, 950);
+  }
+
+  function render(p) {
+    const step = p < .25 ? 0 : p < .5 ? 1 : p < .75 ? 2 : 3;
+    if (step !== lastStep) {
+      caps.forEach((c, i) => c.classList.toggle('on', i === step));
+      chaps.forEach((c, i) => c.classList.toggle('on', i <= step));
+      lastStep = step;
+    }
+    chaps.forEach((c, i) => { c.querySelector('i').style.width = (seg(p, i * .25, (i + 1) * .25) * 100) + '%'; });
+
+    const showCo = p >= .22 && p < .5, showWal = p >= .5 && p < .76;
+    sChat.className = 'scr' + (showCo || showWal ? ' off-l' : '');
+    sCo.className = 'scr co' + (showCo ? '' : p < .22 ? ' off-r' : ' off-l');
+    sWal.className = 'scr wl' + (showWal ? '' : p < .5 ? ' off-r' : ' off-l');
+
+    msgs.forEach((m) => m.classList.toggle('on', p >= +m.dataset.at));
+
+    $('optU').classList.toggle('sel', p > .31);
+    $('qrw').classList.toggle('on', p > .37);
+
+    $('walAmt').firstChild.nodeValue = (49.13 * seg(p, .52, .6)).toFixed(2);
+    const sl = seg(p, .6, .67);
+    $('sFill').style.width = (sl * 100) + '%';
+    $('sKnob').style.transform = `translateX(${sl * Math.max(0, sWal.clientWidth - 28 - 50)}px)`;
+    $('sent').classList.toggle('on', p > .68);
+
+    $('rcv').classList.toggle('on', p > .55);
+    if (p > .69 && !coinsFired) { coinsFired = true; if (!reduce) fireCoins(); else $('rcvAmt').textContent = '$1,252.13'; }
+    if (p < .6 && coinsFired) { coinsFired = false; $('rcvAmt').textContent = '$1,203.00'; }
+
+    const d = p > .8;
+    if (d !== dashOn) { dashOn = d; $('dash').classList.toggle('on', d); if (d && !reduce) countTo($('dashAmt'), 0, 49, '+$'); }
+  }
+  // plays like a video: starts when you reach it, never locks scrolling
+  const DUR = 19000;
+  let t = 0, playing = !reduce, inView = false, last = 0, hold = 0;
+  const setPlay = (on) => {
+    playing = on;
+    $('pp').setAttribute('aria-label', on ? 'Pause' : 'Play');
+    $('ppI').innerHTML = on ? '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  };
+  setPlay(playing);
+  $('pp').addEventListener('click', () => { if (t >= 1) t = 0; setPlay(!playing); });
+  chaps.forEach((c, i) => c.addEventListener('click', () => { t = i * .25 + .002; hold = 0; render(t); }));
+  new IntersectionObserver((e) => { inView = e[0].isIntersecting; }, { threshold: .35 }).observe(film);
+  function tick(now) {
+    const dt = last ? Math.min(64, now - last) : 0; last = now;
+    if (playing && inView) {
+      if (t < 1) { t = Math.min(1, t + dt / DUR); render(t); }
+      else if ((hold += dt) > 2600) { hold = 0; t = 0; render(0); }
+    }
+    requestAnimationFrame(tick);
+  }
+  render(reduce ? 1 : 0);
+  requestAnimationFrame(tick);
+
+  /* ───────── card spotlight ───────── */
+  if (matchMedia('(pointer:fine)').matches) document.querySelectorAll('.card').forEach((el) => el.addEventListener('pointermove', (e) => {
+    const r = el.getBoundingClientRect(); el.style.setProperty('--x', `${e.clientX - r.left}px`); el.style.setProperty('--y', `${e.clientY - r.top}px`);
+  }));
+
+  /* ───────── waitlist ───────── */
+  const form = $('wlForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    const err = $('wlErr'); err.hidden = true;
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(data.email || '')) { err.textContent = 'Enter a valid email address so we can reach you.'; err.hidden = false; $('wl-email').focus(); return; }
+    const btn = $('wlBtn'); btn.disabled = true; btn.style.opacity = .7;
+    try {
+      const r = await fetch('/api/waitlist', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) });
+      if (!(r.headers.get('content-type') || '').includes('json')) throw Object.assign(new Error('preview'), { preview: true });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Something went wrong. Try again.');
+      $('wlTitle').textContent = j.position ? `You're #${j.position} on the list.` : "You're on the list.";
+      $('wlMsg').textContent = `We'll email ${data.email} when your spot opens.`;
+      $('wlFields').hidden = true; $('wlDone').hidden = false;
+    } catch (ex) {
+      if (ex.preview || ex instanceof TypeError) {
+        $('wlTitle').textContent = 'Preview only';
+        $('wlMsg').textContent = 'This is a design preview. On the live Gatevoo site, this form adds people to your waitlist.';
+        $('wlFields').hidden = true; $('wlDone').hidden = false;
+      } else { err.textContent = ex.message; err.hidden = false; }
+    } finally { btn.disabled = false; btn.style.opacity = ''; }
+  });
+})();
+</script><script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /* sticky nav edge */
+  addEventListener('scroll', () => $('nav').classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+  /* giant type marquee */
+  const words = [['USDT', 'f u'], ['Bitcoin', 'f b'], ['Your website', ''], ['Payment links', 'f'], ['USDC soon', ''], ['Ethereum soon', '']];
+  const once = words.map(([w, c]) => `<span class="${c}">${w}</span><i></i>`).join('');
+  $('mega').innerHTML = once + once;
+
+  /* dashboard preview: payments drop in */
+  const people = [
+    ['🧑🏾', '@tolu_ads', 'Joinvoo · USDT', 49], ['👩🏽', 'GlowLabs order #1043', 'Website · USDT', 49], ['🧔🏿', '@ozzy_fx', 'Replyvoo · BTC', 99],
+    ['👩🏾‍🦱', '@kemi.trades', 'Telegram link · USDT', 29], ['👨🏽', 'Pro plan', 'Advoo · USDT', 149], ['👩🏿', '@ada.shops', 'Website · BTC', 19],
+  ];
+  const list = $('dpList'); let k = 0, today = 1203, week = 8412.5, count = 171;
+  const money = (v) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const row = (p, fresh) => `<div class="dp-row ${fresh ? 'new' : ''}"><span class="av">${p[0]}</span><div style="min-width:0"><b>${esc(p[1])}</b><small>${esc(p[2])} · ${fresh ? 'just now' : (k * 3 + 4) + 'm ago'}</small></div><div class="amt">${money(p[3])}<span>PAID</span></div></div>`;
+  list.innerHTML = people.slice(0, 4).map((p, i) => { k = i + 1; return row(p, false); }).join('');
+  function drop() {
+    const p = people[(k++) % people.length];
+    list.insertAdjacentHTML('afterbegin', row(p, true));
+    while (list.children.length > 5) list.lastElementChild.remove();
+    today += p[3]; week += p[3]; count++;
+    $('dpToday').textContent = money(today); $('dpWeek').textContent = money(week); $('dpCount').textContent = count;
+    $('dpDelta').textContent = `+${money(p[3])} just now`;
+    $('dpBadgeT').textContent = `${money(p[3])} from ${p[1]}`;
+    $('dpBadge').classList.add('on'); setTimeout(() => $('dpBadge').classList.remove('on'), 2200);
+  }
+  let dpVisible = false;
+  new IntersectionObserver((e) => { dpVisible = e[0].isIntersecting; }, { threshold: .3 }).observe($('dashboard'));
+  if (!reduce) setInterval(() => { if (dpVisible && !document.hidden) drop(); }, 3200);
+
+
+  /* live conversation */
+  (function talk() {
+    const box = $('cbB'), st = $('cbSt'); let T = [], run = 0, inView = false, started = false;
+    const MARK = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#121110"/><path d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32.4" cy="32" r="3.3" fill="#fff"/></svg>';
+    const W = (ms) => new Promise((r, j) => { const id = run; T.push(setTimeout(() => (id === run ? r() : j()), reduce ? 0 : ms)); });
+    const trim = () => { while (box.scrollHeight > box.clientHeight + 4 && box.children.length > 3) box.firstElementChild.remove(); };
+    function add(who, html) {
+      const me = who === 'tunde';
+      const el = document.createElement('div'); el.className = 'cm' + (me ? ' me' : '');
+      el.innerHTML = `<span class="a">${me ? '🧔🏿' : '👩🏾'}</span><div class="bb"><span class="nm">${me ? 'Tunde' : 'Ada'}</span>${html}</div>`;
+      box.appendChild(el); trim(); return el;
+    }
+    async function typing(who, ms) { st.textContent = (who === 'tunde' ? 'Tunde' : 'Ada') + ' is typing…'; const el = add(who, '<span class="dots"><i></i><i></i><i></i></span>'); await W(ms); el.remove(); st.textContent = 'online'; }
+    async function say(who, html, ms = 900) { await typing(who, ms); return add(who, html); }
+    async function play() {
+      run++; T.forEach(clearTimeout); T = []; box.innerHTML = '';
+      try {
+        await W(400);
+        await say('ada', 'How do I accept crypto on my website? Customers keep asking 😩', 1100);
+        await W(500);
+        await say('tunde', 'Use <b>Gatevoo</b> 👇<span class="lcard">' + MARK + '<span><b>gatevoo.com</b><small>Crypto checkout for your website</small></span></span>', 1000);
+        await W(700);
+        const q = await say('ada', 'Is it hard to set up? I don\'t have a company yet', 900);
+        await W(600);
+        st.textContent = 'Tunde is recording…'; await W(900); st.textContent = 'online';
+        const bars = Array.from({ length: 26 }, (_, i) => `<i style="height:${6 + Math.round(Math.abs(Math.sin(i * 1.7)) * 16)}px"></i>`).join('');
+        const v = add('tunde', `<span class="voice"><span class="pb"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span><span class="wv">${bars}</span><small>0:07</small></span><span class="vtext">"No company needed. Paste your wallet, add one button. Ten minutes."</span>`);
+        const iv = v.querySelectorAll('.wv i');
+        for (let i = 0; i < iv.length; i++) { iv[i].classList.add('on'); await W(110); }
+        await W(400);
+        await say('tunde', 'Watch, I\'ll pay you $49 for the serum right now 👇', 900);
+        const pay = add('tunde', `<span class="minipay"><span class="mp-h">${MARK}GlowLabs checkout<span>Gatevoo</span></span><span class="mp-b"><span class="amt">$49.00</span><span class="cn"><span id="cU"><i style="background:#26A17B">₮</i>USDT</span><span><i style="background:#F7931A">₿</i>Bitcoin</span></span><span class="mp-pay" id="mpPay"><span class="fl" id="mpFl"></span><span id="mpT">Pay 49.13 USDT</span></span></span></span>`);
+        await W(900); pay.querySelector('#cU').classList.add('on');
+        await W(700); pay.querySelector('#mpPay').style.transform = 'scale(.96)'; await W(150); pay.querySelector('#mpPay').style.transform = '';
+        pay.querySelector('#mpFl').style.width = '100%'; pay.querySelector('#mpT').textContent = 'Confirming on TRON…';
+        await W(1700);
+        pay.querySelector('#mpT').innerHTML = '✓ Paid · 00:58';
+        await W(700);
+        const w = await say('ada', 'Wait… it\'s already in my wallet?? 🤯', 800);
+        await W(400); w.querySelector('.bb').insertAdjacentHTML('beforeend', '<span class="react">🔥</span>');
+        await W(500);
+        await say('tunde', 'Your wallet. No paperwork. No waiting. That\'s Gatevoo.', 900);
+        await W(500); q.querySelector('.bb').insertAdjacentHTML('beforeend', '<span class="react">✅</span>');
+        if (!reduce) { await W(5200); play(); }
+      } catch (e) { /* replaced by a newer run */ }
+    }
+    new IntersectionObserver((e) => { inView = e[0].isIntersecting; if (inView && !started) { started = true; play(); } }, { threshold: .35 }).observe(box);
+    $('cbReplay').addEventListener('click', play);
+  })();
+
+  /* Ask Gia: answers from the FAQ, honest about what it knows */
+  const A = {
+    'Does Gatevoo hold my money?': 'No. Customers pay straight into your own wallet. Gatevoo only watches your public address, so it can never spend or freeze your funds.',
+    'How fast is a payment?': 'USDT usually confirms in about a minute. Bitcoin after one block, about 10 minutes on average.',
+    'Which coins?': 'USDT (TRC20) and Bitcoin today. USDC, Ethereum, Solana and cards are coming.',
+    'Does it work on my website?': 'Yes. Add a Pay with crypto button that opens the checkout as a pop-up, or share a payment link. Your site is told the moment payment confirms.',
+    'Do I need a company?': 'No business paperwork to start. You add your wallet address and you are ready.',
+    'What if they send the wrong amount?': 'Overpayments are matched and flagged for a refund of the extra. Short or unclear payments go to a review list where you match them in one tap.',
+    'How do I get access?': 'Join the waitlist on this page. We invite people as spots open.',
+  };
+  const keys = Object.keys(A);
+  const body = $('giaB'), q = $('giaQ');
+  q.innerHTML = keys.map((k2) => `<button type="button">${esc(k2)}</button>`).join('');
+  function say(text, who) { body.insertAdjacentHTML('beforeend', `<div class="gm ${who}">${esc(text)}</div>`); body.scrollTop = body.scrollHeight; }
+  q.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    say(b.textContent, 'u');
+    const typing = document.createElement('div'); typing.className = 'gm g'; typing.textContent = '…'; body.appendChild(typing); body.scrollTop = body.scrollHeight;
+    setTimeout(() => { typing.remove(); say(A[b.textContent], 'g'); }, reduce ? 0 : 650);
+  });
+  const toggle = (on) => { $('gia').classList.toggle('on', on); $('giaBtn').setAttribute('aria-expanded', on); };
+  $('giaBtn').addEventListener('click', () => toggle(!$('gia').classList.contains('on')));
+  $('giaX').addEventListener('click', () => toggle(false));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
+})();
+</script>
+<script>
+/* v2: Voo family icons, orbit money flow, scroll statement, typing code, counters */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const T = (b, inner, id) => `<svg viewBox="0 0 64 64" aria-hidden="true">${id ? `<defs>${id}</defs>` : ''}<rect width="64" height="64" rx="18" fill="${b}"/>${inner}</svg>`;
+  const G = (id, a, c) => `<linearGradient id="${id}" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${c}"/></linearGradient>`;
+  let n = 0; const u = (p) => p + (++n);
+  const ICON = {
+    joinvoo: () => { const i = u('jv'); return T(`url(#${i})`, '<circle cx="25" cy="32" r="9.5" fill="none" stroke="#fff" stroke-width="5.4"/><circle cx="39" cy="32" r="9.5" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="5.4"/>', G(i, '#8A6CFF', '#5537E0')); },
+    replyvoo: () => T('#121110', '<path d="M18 20h28a4 4 0 0 1 4 4v13a4 4 0 0 1-4 4H30l-8 6v-6h-4a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z" fill="#F5C451"/><circle cx="25" cy="30.5" r="2.3" fill="#121110"/><circle cx="32" cy="30.5" r="2.3" fill="#121110"/><circle cx="39" cy="30.5" r="2.3" fill="#121110"/>'),
+    castvoo: () => { const i = u('cv'); return T(`url(#${i})`, '<path d="M38.5 22.6A12 12 0 1 0 38.5 41.4" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round"/><circle cx="44" cy="32" r="3.4" fill="#fff"/>', G(i, '#5B86FF', '#2C50E0')); },
+    advoo: () => T('#121110', '<circle cx="26" cy="32" r="7.5" fill="#fff"/><circle cx="38.5" cy="32" r="7.5" fill="#F0613A"/>'),
+    affleego: () => T('#F8DA5B', '<path d="M22 45l10-26 10 26M26 36h12" fill="none" stroke="#121110" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/>'),
+    landvoo: () => { const i = u('lv'); return T(`url(#${i})`, '<rect x="17" y="20" width="30" height="24" rx="5" fill="none" stroke="#fff" stroke-width="4.4"/><path d="M17 29h30M23 37h11" stroke="#fff" stroke-width="4.4" stroke-linecap="round"/>', G(i, '#F57BB4', '#D2468A')); },
+    voosquare: () => { const i = u('vq'); return T(`url(#${i})`, '<rect x="15" y="15" width="15" height="15" rx="4.5" fill="#fff"/><rect x="34" y="15" width="15" height="15" rx="4.5" fill="#C3E8D9"/><rect x="15" y="34" width="15" height="15" rx="4.5" fill="#C3E8D9"/><rect x="34" y="34" width="15" height="15" rx="4.5" fill="#C8F55A"/>', G(i, '#18C784', '#047A4C')); },
+  };
+  const fill = (root) => root.querySelectorAll('[data-app]').forEach((el) => { if (!el.firstChild && ICON[el.dataset.app]) el.innerHTML = ICON[el.dataset.app](); });
+  fill(document);
+
+  /* reveal on scroll */
+  const rv = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { const el = e.target; const sib = [...el.parentElement.children].filter((c) => c.hasAttribute('data-rv')); el.style.transitionDelay = (sib.indexOf(el) * 70) + 'ms'; el.classList.add('in'); rv.unobserve(el); } }), { threshold: .15 });
+  document.querySelectorAll('[data-rv]').forEach((el) => reduce ? el.classList.add('in') : rv.observe(el));
+
+  /* statement: words light up as it scrolls through (no pinning) */
+  const say = $('sayT');
+  if (say) {
+    const wrapWords = (node) => [...node.childNodes].forEach((c) => {
+      if (c.nodeType === 3) { const f = document.createDocumentFragment(); c.textContent.split(/(\s+)/).forEach((w) => { if (!w) return; if (/^\s+$/.test(w)) f.appendChild(document.createTextNode(w)); else { const s = document.createElement('span'); s.className = 'w'; s.textContent = w; f.appendChild(s); } }); c.replaceWith(f); }
+      else wrapWords(c);
+    });
+    wrapWords(say);
+    const ws = [...say.querySelectorAll('.w')];
+    const upd = () => {
+      const r = say.getBoundingClientRect(), vh = innerHeight;
+      const p = reduce ? 1 : Math.min(1, Math.max(0, (vh * .85 - r.top) / (vh * .55 + r.height * .6)));
+      const k = Math.round(p * ws.length);
+      ws.forEach((w, i) => w.classList.toggle('on', i < k));
+    };
+    addEventListener('scroll', upd, { passive: true }); addEventListener('resize', upd); upd();
+  }
+
+  /* family orbit: coins fly from each app through the gate into the wallet */
+  const orbit = $('orbit');
+  if (orbit) {
+    const apps = [['joinvoo', 'Joinvoo', 'Pro plan', 29], ['replyvoo', 'Replyvoo', 'Agent seat', 49], ['castvoo', 'Castvoo', 'Growth plan', 39], ['advoo', 'Advoo', '200 credits', 20], ['affleego', 'Affleego', 'Deal unlock', 15], ['landvoo', 'Landvoo', 'Coming soon', 0]];
+    const C = 50, Rr = 38; const pos = apps.map((a, i) => { const t = (150 + i * 48) * Math.PI / 180; return [C + Rr * Math.cos(t), C + Rr * Math.sin(t)]; });
+    $('oLines').innerHTML = pos.map(([x, y], i) => `<line id="ol${i}" x1="${x}" y1="${y}" x2="50" y2="50"/>`).join('') + '<line id="olW" x1="50" y1="50" x2="50" y2="94"/>';
+    const els = apps.map((a, i) => { const d = document.createElement('div'); d.className = 'o-app'; d.style.left = pos[i][0] + '%'; d.style.top = pos[i][1] + '%'; d.innerHTML = `<i data-app="${a[0]}"></i><small>${a[1]}</small>`; if (!a[3]) d.style.opacity = '.4'; orbit.appendChild(d); return d; });
+    fill(orbit);
+    let bal = 12480, vis = false, k = 0;
+    const money = (v) => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const coin = (from, to, color, ms) => new Promise((res) => {
+      const c = document.createElement('span'); c.className = 'o-coin'; c.style.background = color; c.style.color = color; c.style.left = from[0] + '%'; c.style.top = from[1] + '%'; orbit.appendChild(c);
+      const a = c.animate([{ left: from[0] + '%', top: from[1] + '%', opacity: 0 }, { opacity: 1, offset: .15 }, { left: to[0] + '%', top: to[1] + '%', opacity: 1 }], { duration: ms, easing: 'cubic-bezier(.5,0,.3,1)' });
+      a.onfinish = () => { c.remove(); res(); };
+    });
+    const feed = $('famFeed');
+    async function shot() {
+      const live = apps.filter((a) => a[3]); const a = live[k++ % live.length]; const i = apps.indexOf(a);
+      const usdt = Math.random() > .25, color = usdt ? '#26A17B' : '#F7931A';
+      els[i].classList.add('go'); $('ol' + i).classList.add('hot');
+      await coin(pos[i], [50, 50], color, 1100);
+      els[i].classList.remove('go'); $('ol' + i).classList.remove('hot');
+      const core = $('oCore'); core.classList.remove('hit'); void core.offsetWidth; core.classList.add('hit'); $('oDot').setAttribute('fill', color);
+      $('olW').classList.add('hot');
+      await coin([50, 50], [50, 93], color, 700);
+      $('olW').classList.remove('hot'); $('oDot').setAttribute('fill', '#121110');
+      bal += a[3]; $('oBal').textContent = money(bal); const w = $('oWallet'); w.classList.add('bump'); setTimeout(() => w.classList.remove('bump'), 300);
+      feed.insertAdjacentHTML('afterbegin', `<div class="ff"><i data-app="${a[0]}"></i><div><b>${a[1]} · ${a[2]}</b><small>${usdt ? 'USDT · TRON' : 'Bitcoin'} · just now</small></div><span class="v">+${money(a[3])}</span></div>`);
+      fill(feed); while (feed.children.length > (innerWidth < 760 ? 2 : 3)) feed.lastElementChild.remove();
+    }
+    new IntersectionObserver((e) => { vis = e[0].isIntersecting; }, { threshold: .25 }).observe(orbit);
+    if (!reduce) (function loop() { setTimeout(async () => { if (vis && !document.hidden) await shot(); loop(); }, 900); })();
+    else shot();
+  }
+
+  /* developer: code types itself, steps follow, then "paid" */
+  const cwB = $('cwB');
+  if (cwB) {
+    const FILES = [
+      [['c', '<!-- 1. load Gatevoo once -->\n'], ['', '<script src='], ['s', '"https://gatevoo.com/gatevoo.js"'], ['', '><\/script>\n\n'], ['c', '<!-- 2. any button can open the checkout -->\n'], ['', '<button onclick="'], ['k', 'Gatevoo'], ['', '.'], ['f', 'open'], ['', '('], ['s', "'inv_8Kd2'"], ['', ', {\n  onPaid: () => '], ['f', 'showThanks'], ['', '()\n})">Pay with crypto</button>']],
+      [['c', '// 3. Gatevoo tells your server the moment money lands\n'], ['', 'app.'], ['f', 'post'], ['', '('], ['s', "'/gatevoo'"], ['', ', (req, res) => {\n  if (!'], ['f', 'verifySignature'], ['', '(req)) return res.'], ['f', 'sendStatus'], ['', '(401)\n\n  const { order_id } = req.body.data\n  '], ['f', 'unlockOrder'], ['', '(order_id)   '], ['c', '// customer gets access'], ['', '\n  res.'], ['f', 'sendStatus'], ['', '(200)\n})']],
+    ];
+    const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const tabs = document.querySelectorAll('.cw-tabs button'), steps = document.querySelectorAll('#dSteps li'), toast = $('cwToast');
+    let run = 0, vis = false, started = false;
+    const wait = (ms, id) => new Promise((r, j) => setTimeout(() => (id === run ? r() : j()), reduce ? 0 : ms));
+    const show = (f) => { tabs.forEach((t, i) => t.classList.toggle('on', i === f)); };
+    const step = (s) => steps.forEach((li, i) => li.classList.toggle('on', i === s));
+    async function type(f, id) {
+      show(f); cwB.innerHTML = '';
+      let html = '';
+      for (const [cls, txt] of FILES[f]) {
+        for (let i = 0; i < txt.length; i += reduce ? txt.length : 2) {
+          const part = txt.slice(0, i + 2);
+          cwB.innerHTML = html + (cls ? `<span class="${cls}">${esc(part)}</span>` : esc(part)) + '<span class="cur"></span>';
+          await wait(16, id);
+        }
+        html += cls ? `<span class="${cls}">${esc(txt)}</span>` : esc(txt);
+      }
+      cwB.innerHTML = html + '<span class="cur"></span>';
+    }
+    async function play() {
+      const id = ++run; toast.classList.remove('on');
+      try {
+        step(0); await wait(1400, id);
+        step(1); await type(0, id); await wait(1500, id);
+        step(2); await type(1, id); await wait(700, id);
+        toast.classList.add('on'); await wait(4200, id);
+        if (!reduce) play();
+      } catch (e) { /* superseded */ }
+    }
+    tabs.forEach((t, i) => t.addEventListener('click', () => { run++; toast.classList.remove('on'); step(i + 1); show(i); cwB.innerHTML = FILES[i].map(([c, x]) => c ? `<span class="${c}">${esc(x)}</span>` : esc(x)).join(''); }));
+    new IntersectionObserver((e) => { vis = e[0].isIntersecting; if (vis && !started) { started = true; play(); } }, { threshold: .3 }).observe(cwB);
+  }
+
+  /* numbers count up */
+  const nums = document.querySelectorAll('#nums [data-to]');
+  const no = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; const el = e.target, to = +el.dataset.to; no.unobserve(el);
+    if (reduce || to === 0) { el.textContent = to; if (to === 0 && !reduce) el.animate([{ transform: 'scale(1.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 700, easing: 'cubic-bezier(.2,1.4,.3,1)' }); return; }
+    const t0 = performance.now(); (function f(t) { const p = Math.min(1, (t - t0) / 1200); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(f); })(t0); }), { threshold: .5 });
+  nums.forEach((el) => no.observe(el));
+})();
+</script>

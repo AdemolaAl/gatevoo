@@ -1,0 +1,16 @@
+{
+  "name": "gatevoo",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Gatevoo: non-custodial USDT (TRC20) and Bitcoin checkout for Zedapex apps. No dependencies.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "MOCK_CHAIN=1 node src/server.js",
+    "test": "node test/run.js"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "dependencies": {}
+}

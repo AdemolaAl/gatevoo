@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Gatevoo Checkout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* Layout: one receipt-like card, phone first. Three stages share it: pick a coin → send → paid. */
+:root{
+  --bg:#FAF9F5; --surface:#FFFFFF; --sunk:#F3F1EB; --line:#EAE7DF; --line-2:#DEDACF;
+  --ink:#121110; --ink-2:#2C2925; --muted:#5E5A50; --faint:#948F82;
+  --brand:#121110; --brand-ink:#FFFFFF; --brand-soft:#F3F1EB; --brand-text:#121110; --merchant:#121110; --ok:#1F9D6B; --ok-soft:#E5F5EE;
+  --sun:#FFC83D; --usdt:#26A17B; --btc:#F7931A; --warn:#8A5A00; --warn-soft:#FFF5DF; --bad:#D23C31;
+  --shadow:0 1px 2px rgba(18,17,16,.05),0 40px 70px -34px rgba(18,17,16,.4);
+  --display:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C0B0A; --surface:#161513; --sunk:#1E1C19; --line:#2C2925; --line-2:#3A3732;
+  --ink:#F4F2EE; --ink-2:#D6D2C8; --muted:#A9A398; --faint:#6E695E;
+  --brand:#F4F2EE; --brand-ink:#121110; --brand-soft:#1E1C19; --brand-text:#F4F2EE; --warn:#F2B84B; --warn-soft:#2A2110; --ok:#4BC994; --ok-soft:#14261D;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 30px 60px -30px rgba(0,0,0,.9); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C0B0A; --surface:#161513; --sunk:#1E1C19; --line:#2C2925; --line-2:#3A3732;
+  --ink:#F4F2EE; --ink-2:#D6D2C8; --muted:#A9A398; --faint:#6E695E;
+  --brand:#F4F2EE; --brand-ink:#121110; --brand-soft:#1E1C19; --brand-text:#F4F2EE; --warn:#F2B84B; --warn-soft:#2A2110; --ok:#4BC994; --ok-soft:#14261D;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 30px 60px -30px rgba(0,0,0,.9); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--display);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding:max(28px,env(safe-area-inset-top)) 16px max(28px,env(safe-area-inset-bottom));min-height:100vh;position:relative;overflow-x:hidden}
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(60px);opacity:.55;pointer-events:none}
+body::before{width:420px;height:420px;left:-120px;top:-140px;background:rgba(18,17,16,.10);animation:drift 16s ease-in-out infinite}
+body::after{width:360px;height:360px;right:-120px;bottom:-120px;background:rgba(38,161,123,.16);animation:drift 20s ease-in-out infinite reverse}
+@keyframes drift{50%{transform:translate(50px,40px) scale(1.1)}}
+body.embed{background:transparent;padding:0}
+body.embed::before,body.embed::after{display:none}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.card{max-width:420px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:30px;box-shadow:var(--shadow);overflow:hidden;animation:in .6s var(--ease)}
+@keyframes in{from{transform:translateY(14px);opacity:0}}
+.head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.merchant{display:flex;gap:10px;align-items:center;font-weight:800;letter-spacing:-.02em;min-width:0}
+.merchant .lg{width:32px;height:32px;border-radius:10px;background:var(--merchant);color:#fff;display:grid;place-items:center;font-size:14px;font-weight:700;flex:none}
+.merchant span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lock{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.sum{padding:20px 18px 18px;display:grid;gap:4px}
+.sum .lbl{font-size:12.5px;color:var(--muted)}
+.amt{font:800 42px/1.05 var(--display);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.desc{color:var(--ink-2);font-size:14px}
+.prog{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 18px 16px}
+.prog i{height:3px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}
+.prog i::after{content:"";position:absolute;inset:0;background:var(--brand);transform:scaleX(0);transform-origin:left;transition:transform .7s var(--ease)}
+.prog i.on::after{transform:none}
+.body{padding:4px 18px 20px;display:grid;gap:14px}
+.preview{justify-self:start;font:600 10.5px var(--mono);letter-spacing:.08em;color:var(--warn);background:var(--warn-soft);border-radius:99px;padding:3px 9px}
+.stage{display:grid;gap:14px;animation:stageIn .45s var(--ease)}
+@keyframes stageIn{from{opacity:0;transform:translateY(8px)}}
+
+/* choose */
+.choose h2{margin:0;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.opt{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:12px 14px;transition:border-color .2s,transform .2s,box-shadow .2s;width:100%}
+.opt:hover{border-color:var(--brand);transform:translateY(-1px);box-shadow:0 10px 24px -16px rgba(18,17,16,.35)}
+.opt .cn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px}
+.opt b{display:block;font-weight:600}
+.opt small{color:var(--muted);font-size:12.5px}
+.opt .tag{font:700 11px var(--display);color:var(--ink);background:var(--sunk);border-radius:99px;padding:3px 8px;white-space:nowrap}
+
+/* pay */
+.switch{position:relative;display:grid;grid-template-columns:repeat(var(--n,2),1fr);background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:3px}
+.switch .k{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n,2));border-radius:9px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .45s var(--ease)}
+.switch button{position:relative;z-index:1;border:0;background:none;padding:8px;font-size:13px;font-weight:500;color:var(--muted);display:flex;gap:6px;align-items:center;justify-content:center;transition:color .2s}
+.switch button.on{color:var(--ink)}
+.switch button i{width:16px;height:16px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:9px;font-style:normal;font-weight:700}
+.qrwrap{display:grid;justify-items:center;gap:8px}
+.qrf{position:relative;padding:12px;border-radius:22px;background:#fff;border:1px solid var(--line)}
+.qrf #qr img,.qrf #qr canvas{display:block;width:184px!important;height:184px!important}
+.qrf .badge{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 0 0 4px #fff}
+.qrf .badge i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-style:normal}
+.qrf svg.timer{position:absolute;inset:-5px;width:calc(100% + 10px);height:calc(100% + 10px);pointer-events:none;overflow:visible}
+.qrf svg.timer rect{fill:none;stroke-width:3;stroke-linecap:round}
+.qrf svg.timer .bg{stroke:var(--line)}
+.qrf svg.timer .fg{stroke:var(--brand);transition:stroke-dashoffset 1s linear}
+.qrwrap small{color:var(--muted);font-size:12.5px}
+.rows{border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;padding:11px 12px 11px 14px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .k{font-size:12.5px;color:var(--muted);min-width:64px}
+.row .v{flex:1;min-width:0;font:500 13px var(--mono);overflow-wrap:anywhere;text-align:right}
+.row .v.big{font-size:18px;font-weight:600;letter-spacing:-.03em}
+.cp{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:6px 10px;font-size:12px;font-weight:600;flex:none;display:flex;gap:5px;align-items:center;transition:all .2s}
+.cp:hover{border-color:var(--line-2)}
+.cp.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.note{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:12.5px}
+.note b{font-weight:600}
+.track{list-style:none;margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:16px;display:grid;gap:12px}
+.track li{display:grid;grid-template-columns:20px 1fr auto;gap:10px;align-items:center;font-size:13.5px;color:var(--faint);transition:color .3s}
+.track li .b{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-2);display:grid;place-items:center;position:relative;transition:all .3s}
+.track li.now{color:var(--ink)}
+.track li.now .b{border-color:var(--brand)}
+.track li.now .b::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{transform:scale(.5);opacity:.5}}
+.track li.done{color:var(--ink-2)}
+.track li.done .b{background:var(--ok);border-color:var(--ok);color:#fff}
+.track li small{font:500 11.5px var(--mono);color:var(--faint)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:600;padding:14px;font-size:15px;text-decoration:none;transition:transform .15s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn.alt{background:var(--sunk);color:var(--ink);border:1px solid var(--line)}
+.link{background:none;border:0;color:var(--brand-text);font-weight:500;font-size:13px;padding:4px;justify-self:center;text-decoration:none}
+
+/* done */
+.done{display:grid;justify-items:center;text-align:center;gap:10px;padding-top:6px;position:relative}
+.check{width:72px;height:72px}
+.check circle{stroke:var(--ok);stroke-width:3;fill:var(--ok-soft);stroke-dasharray:220;stroke-dashoffset:220;animation:dr .7s var(--ease) forwards}
+.check path{stroke:var(--ok);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:dr .45s .5s var(--ease) forwards}
+@keyframes dr{to{stroke-dashoffset:0}}
+.done h2{margin:0;font-size:24px;font-weight:800;letter-spacing:-.04em}
+.done p{margin:0;color:var(--muted);font-size:14px}
+.burst{position:absolute;left:50%;top:36px;width:0;height:0;pointer-events:none}
+.burst i{position:absolute;width:7px;height:7px;border-radius:2px}
+.err{color:var(--bad);font-size:13px;margin:0;text-align:center}
+.skel{height:220px;border-radius:16px;background:linear-gradient(90deg,var(--sunk),var(--line),var(--sunk));background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.foot{max-width:420px;margin:16px auto 0;display:flex;justify-content:center;align-items:center;gap:8px;color:var(--faint);font-size:12px}
+.foot svg{width:16px;height:16px}
+.foot b{color:var(--muted);font-weight:600}
+
+/* merchant + verified */
+.merchant .lg{overflow:hidden}
+.merchant .lg img{width:100%;height:100%;object-fit:cover;display:block}
+.merchant .nm{display:flex;align-items:center;gap:6px;min-width:0}
+.merchant .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800}
+.vbadge{position:relative;display:inline-grid;place-items:center;width:18px;height:18px;flex:none;cursor:help}
+.vbadge svg{width:18px;height:18px;display:block}
+.vbadge .seal{animation:sealSpin 12s linear infinite;transform-origin:50% 50%}
+.vbadge::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%) translateY(-4px);background:var(--ink);color:var(--bg);font-size:11.5px;font-weight:600;white-space:nowrap;padding:6px 9px;border-radius:9px;opacity:0;pointer-events:none;transition:all .2s;z-index:5}
+.vbadge:hover::after,.vbadge:focus::after{opacity:1;transform:translateX(-50%)}
+@keyframes sealSpin{to{transform:rotate(1turn)}}
+.vpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:99px;padding:5px 10px 5px 6px}
+.vpill i{width:16px;height:16px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-style:normal;font-size:10px}
+.vpill.ink{color:var(--ink);background:var(--sunk)}.vpill.ink i{background:var(--ink);color:var(--bg)}
+.hi{font-size:13px;color:var(--muted)}
+/* fresh address + part payments */
+.own{display:flex;align-items:center;gap:8px;justify-content:center;font-size:12.5px;font-weight:700;color:var(--ink)}
+.own i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 4px var(--ok-soft);animation:pulse 1.6s infinite}
+.part{border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:grid;gap:8px}
+.part .bar{height:8px;border-radius:8px;background:var(--sunk);overflow:hidden}
+.part .bar i{display:block;height:100%;background:var(--btc);border-radius:8px;transition:width .8s var(--ease)}
+.part .rw{display:flex;justify-content:space-between;font-size:13px}.part .rw b{font-variant-numeric:tabular-nums}
+/* paid: animated person with cash */
+.hero{position:relative;width:200px;height:176px;margin:-6px auto -4px}
+.hero svg{width:100%;height:100%;overflow:visible}
+.guy{animation:bounce 1.3s cubic-bezier(.45,0,.55,1) infinite;transform-origin:100px 186px}
+@keyframes bounce{50%{transform:translateY(-5px)}}
+.arm{transform-origin:128px 102px;animation:wave 1.3s cubic-bezier(.45,0,.55,1) infinite}
+@keyframes wave{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(7deg)}}
+.fan rect{transform-box:fill-box;transform-origin:50% 100%}
+.fan .b1{animation:fanL 1.3s ease-in-out infinite}.fan .b3{animation:fanR 1.3s ease-in-out infinite}
+@keyframes fanL{50%{transform:rotate(-8deg)}}@keyframes fanR{50%{transform:rotate(8deg)}}
+.eye{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.1)}}
+.fly{animation:fly 2.4s ease-in infinite;opacity:0}
+.fly.f2{animation-delay:.8s}.fly.f3{animation-delay:1.6s}
+@keyframes fly{0%{transform:translate(0,0) rotate(0);opacity:0}15%{opacity:1}100%{transform:translate(var(--dx),-90px) rotate(var(--r));opacity:0}}
+.spark{animation:spark 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.spark.s2{animation-delay:.6s}.spark.s3{animation-delay:1.2s}
+@keyframes spark{0%,100%{transform:scale(0);opacity:0}50%{transform:scale(1);opacity:1}}
+.paidchip{position:absolute;left:4px;top:30px;background:var(--ok);color:#fff;font-size:12px;font-weight:800;padding:6px 10px;border-radius:99px;box-shadow:0 10px 20px -8px rgba(31,157,107,.7);animation:chip .6s .4s cubic-bezier(.2,1.6,.3,1) both}
+@keyframes chip{from{transform:scale(0) rotate(-12deg)}}
+.receipt{width:100%;text-align:left;margin-top:4px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+@media print{body{background:#fff;padding:0}body::before,body::after,.actions,.foot .x,.hero,#burst{display:none!important}.card{box-shadow:none;border:1px solid #ddd}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.check circle,.check path{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<main class="card" aria-live="polite">
+  <div class="head">
+    <div class="merchant"><span class="lg" id="mLogo">G</span><span class="nm"><b id="mName">Loading…</b><span id="mBadge"></span></span></div>
+    <div class="lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Secure checkout</div>
+  </div>
+  <div class="sum"><span class="lbl">Total</span><div class="amt" id="amt">$—</div><div class="desc" id="desc"></div></div>
+  <div class="prog" aria-hidden="true"><i id="p1"></i><i id="p2"></i><i id="p3"></i></div>
+  <div class="body" id="view"><div class="skel"></div></div>
+</main>
+<div class="foot"><svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#121110"/><path d="M41.64 20.51A15 15 0 1 0 47 32H40" fill="none" stroke="#fff" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32.4" cy="32" r="3.3" fill="#fff"/></svg>Powered by <b>Gate<span style="color:var(--faint)">voo</span></b></div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const view = $('view');
+  const params = new URLSearchParams(location.search);
+  if (params.get('embed') === '1') document.body.classList.add('embed');
+  const m = location.pathname.match(/\/pay\/(inv_[A-Za-z0-9_-]+)/);
+  const invoiceId = m ? m[1] : null;
+  const COINS = {
+    USDT_TRC20: { sym: '₮', color: '#26A17B', name: 'USDT', net: 'TRON (TRC20)', unit: 'USDT', speed: '~1 min' },
+    BTC: { sym: '₿', color: '#F7931A', name: 'Bitcoin', net: 'Bitcoin network', unit: 'BTC', speed: '~10 min' },
+  };
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let inv = null, skew = 0, demo = false, poll = null, tick = null, demoT = [];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const now = () => Date.now() + skew;
+  const fmtUsd = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const ICON_COPY = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+  const SEAL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="seal" fill="currentColor" style="color:var(--ink)" d="M12 1.5l2.2 1.6 2.7-.3 1.1 2.5 2.5 1.1-.3 2.7L21.8 11l-1.6 2.2.3 2.7-2.5 1.1-1.1 2.5-2.7-.3L12 20.8l-2.2-1.6-2.7.3-1.1-2.5-2.5-1.1.3-2.7L2.2 11l1.6-2.2-.3-2.7 2.5-1.1 1.1-2.5 2.7.3z"/><path d="M8 11.3l2.6 2.6 5.4-5.4" fill="none" stroke="var(--bg)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CHECK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  async function api(path, opts) {
+    const r = await fetch(path, opts);
+    if (!(r.headers.get('content-type') || '').includes('json')) throw Object.assign(new Error('no api'), { noApi: true });
+    const j = await r.json();
+    if (!r.ok) throw Object.assign(new Error(j.error || 'Something went wrong'), { status: r.status });
+    return j;
+  }
+  const demoInv = () => ({
+    id: 'inv_preview', status: 'open', amount_usd: 49, description: 'Vitamin C serum', order_id: '#1043', customer_name: 'Tunde', merchant: { name: 'GlowLabs', color: '#121110', verified: true, logo: null },
+    method: null, network: null, pay_amount: null, address: null, expires_at: Date.now() + 30 * 60e3, server_time: Date.now(),
+    confirmations: null, confirmations_required: 1, methods: [{ id: 'USDT_TRC20', label: 'USDT', network: 'TRON (TRC20)', mode: 'exact' }, { id: 'BTC', label: 'Bitcoin', network: 'Bitcoin', mode: 'fresh' }],
+  });
+  async function load() {
+    if (!invoiceId) return useDemo();
+    try { set(await api(`/api/pay/${invoiceId}`)); }
+    catch (e) { if (e.noApi || e instanceof TypeError) return useDemo(); fail(e.status === 404 ? 'This payment link does not exist. Ask the seller for a new one.' : e.message); }
+  }
+  function useDemo() { demo = true; set(demoInv()); }
+
+  async function quote(method) {
+    if (demo) {
+      demoT.forEach(clearTimeout); demoT = [];
+      const q = { ...inv, ...(method === 'BTC'
+        ? { method, mode: 'fresh', network: 'Bitcoin', pay_amount: '0.000766', address: 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu' }
+        : { method, mode: 'exact', network: 'TRON (TRC20)', pay_amount: '49.13', address: 'TLsV52sRDL79HXGGm9yzwKibb6BeruhUzy' }),
+        status: 'open', confirmations: null, expires_at: Date.now() + 30 * 60e3, server_time: Date.now() };
+      set(q);
+      if (!reduce) {
+        demoT.push(setTimeout(() => set({ ...q, status: 'confirming', confirmations: 0, txid: 'demo', server_time: Date.now() }), 7000));
+        demoT.push(setTimeout(() => set({ ...q, status: 'paid', confirmations: 1, txid: 'demo', paid_at: Date.now(), server_time: Date.now() }), 11500));
+      }
+      return;
+    }
+    view.innerHTML = '<div class="skel"></div>';
+    try { set(await api(`/api/pay/${invoiceId}/quote`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ method }) })); }
+    catch (e) { render(); flash(e.message); }
+  }
+
+  function set(next) {
+    if (next.server_time) skew = next.server_time - Date.now();
+    const changed = !inv || inv.status !== next.status || inv.method !== next.method || inv.pay_amount !== next.pay_amount || inv.confirmations !== next.confirmations || inv.remaining !== next.remaining;
+    inv = next; header();
+    if (changed) render();
+    schedule();
+  }
+  function header() {
+    const name = inv.merchant?.name || 'Gatevoo';
+    $('mName').textContent = name;
+    const lg = $('mLogo');
+    if (inv.merchant?.logo && /^data:image\/(png|jpeg|webp);base64,/.test(inv.merchant.logo)) { lg.textContent = ''; const im = new Image(); im.alt = ''; im.src = inv.merchant.logo; lg.replaceChildren(im); lg.style.background = '#fff'; }
+    else lg.textContent = name.slice(0, 1).toUpperCase();
+    if (inv.merchant?.color && /^#[0-9a-f]{6}$/i.test(inv.merchant.color)) document.documentElement.style.setProperty('--merchant', inv.merchant.color);
+    $('mBadge').innerHTML = inv.merchant?.verified ? `<span class="vbadge" tabindex="0" data-tip="Verified business on Gatevoo" aria-label="Verified business">${SEAL}</span>` : '';
+    $('amt').textContent = fmtUsd(inv.amount_usd); $('desc').textContent = inv.description || '';
+    document.title = `Pay ${fmtUsd(inv.amount_usd)} · ${name}`;
+  }
+  function schedule() {
+    clearInterval(poll);
+    if (!demo && ['open', 'confirming'].includes(inv.status)) poll = setInterval(async () => { try { set(await api(`/api/pay/${invoiceId}`)); } catch {} }, inv.status === 'confirming' ? 6000 : 4000);
+  }
+  function progress(n) { ['p1', 'p2', 'p3'].forEach((id, i) => $(id).classList.toggle('on', i < n)); }
+
+  function render() {
+    clearInterval(tick);
+    const s = inv.status;
+    if (s === 'paid') return paid();
+    if (s === 'cancelled') return msg('This payment was cancelled', 'Ask the seller for a new payment link.');
+    if (s === 'expired' && !inv.method) return msg('This link has expired', 'Ask the seller for a new one.');
+    if (!inv.method) return choose();
+    pay();
+  }
+  const tagPreview = () => demo ? '<span class="preview">PREVIEW · NO REAL MONEY</span>' : '';
+
+  function choose() {
+    progress(1);
+    view.innerHTML = `<div class="stage choose">${tagPreview()}${inv.customer_name ? `<span class="hi">Hi ${esc(inv.customer_name)} 👋</span>` : ''}<h2>How would you like to pay?</h2>
+      ${inv.methods.map((x) => { const c = COINS[x.id]; return `<button class="opt" data-m="${x.id}" type="button"><span class="cn" style="background:${c.color}">${c.sym}</span><span><b>${esc(c.name)}</b><small>${esc(x.network)}</small></span><span class="tag">${x.mode === 'fresh' ? 'Own address' : c.speed}</span></button>`; }).join('') || '<p class="err">No payment method is set up yet.</p>'}
+      <span style="text-align:center;color:var(--faint);font-size:12.5px">Pay from any wallet or exchange</span></div>`;
+    view.querySelectorAll('.opt').forEach((b) => b.addEventListener('click', () => quote(b.dataset.m)));
+    if (inv.methods.length === 1 && !demo) quote(inv.methods[0].id);
+  }
+
+  function pay() {
+    const c = COINS[inv.method], conf = inv.status === 'confirming', expired = inv.status === 'expired';
+    progress(conf ? 3 : 2);
+    const fresh = inv.mode === 'fresh', part = !!inv.remaining;
+    const due = part ? inv.remaining : inv.pay_amount;
+    const amountText = `${due} ${c.unit}`;
+    const pct = part ? Math.min(100, Math.round(Number(inv.received) / Number(inv.pay_amount) * 100)) : 0;
+    const idx = Math.max(0, inv.methods.findIndex((x) => x.id === inv.method));
+    view.innerHTML = `<div class="stage">
+      ${tagPreview()}
+      ${inv.methods.length > 1 && !conf ? `<div class="switch" style="--n:${inv.methods.length}"><span class="k" style="transform:translateX(${idx * 100}%)"></span>${inv.methods.map((x) => { const k = COINS[x.id]; return `<button type="button" data-m="${x.id}" class="${x.id === inv.method ? 'on' : ''}"><i style="background:${k.color}">${k.sym}</i>${esc(k.name)}</button>`; }).join('')}</div>` : ''}
+      ${expired ? '' : `<div class="qrwrap"><div class="qrf"><div id="qr"></div><span class="badge"><i style="background:${c.color}">${c.sym}</i></span>
+        <svg class="timer" id="timer" aria-hidden="true"><rect class="bg" x="2" y="2" width="10" height="10" rx="25" pathLength="100"/><rect class="fg" id="ring" x="2" y="2" width="10" height="10" rx="25" pathLength="100" stroke-dasharray="100" stroke-dashoffset="0"/></svg></div>
+        <small>${conf ? 'Payment received, confirming…' : 'Scan with your wallet app, or copy below'}</small>${fresh && !conf ? '<span class="own"><i></i>This address was made just for you</span>' : ''}</div>`}
+      ${part ? `<div class="part"><div class="rw"><span>Received</span><b>${esc(inv.received)} of ${esc(inv.pay_amount)} ${c.unit}</b></div><div class="bar"><i style="width:${pct}%"></i></div><div class="rw"><span>Send the rest to the same address</span><b>${esc(inv.remaining)} ${c.unit}</b></div></div>` : ''}
+      <div class="rows">
+        <div class="row"><span class="k">${part ? 'Still to send' : 'Amount'}</span><span class="v big">${esc(amountText)}</span><button class="cp" data-copy="${esc(due)}" type="button">${ICON_COPY}Copy</button></div>
+        <div class="row"><span class="k">To</span><span class="v">${esc(inv.address)}</span><button class="cp" data-copy="${esc(inv.address)}" type="button">${ICON_COPY}Copy</button></div>
+        <div class="row"><span class="k">Network</span><span class="v">${esc(c.net)}</span></div>
+      </div>
+      ${conf ? '' : `<div class="note"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span>${fresh ? `Send <b>${esc(amountText)}</b> on the <b>${esc(c.net)}</b>. Sent a little less? Top up to the same address and it adds up.` : `Send <b>exactly ${esc(amountText)}</b> on <b>${esc(c.net)}</b>. ${inv.method === 'USDT_TRC20' ? 'If your exchange takes a fee, add it on top.' : 'Scanning the code fills in the amount for you.'}`}</span></div>`}
+      <ol class="track">
+        <li class="${conf ? 'done' : expired ? '' : 'now'}"><span class="b">${conf ? CHECK : ''}</span>${expired ? 'This amount expired' : 'Waiting for your payment'}<small id="cd">${expired ? '' : '--:--'}</small></li>
+        <li class="${conf ? 'now' : ''}"><span class="b"></span>Payment detected<small>${conf ? `${inv.confirmations || 0}/${inv.confirmations_required}` : ''}</small></li>
+        <li><span class="b"></span>Confirmed<small>${c.speed}</small></li>
+      </ol>
+      ${expired ? '<p style="margin:0;color:var(--muted);font-size:13px;text-align:center">Already sent it? It will still be matched. Otherwise get a fresh amount.</p><button class="btn" id="requote" type="button">Get a fresh amount</button>' : ''}
+    </div>`;
+    if (!expired) { drawQr(c); fitRing(); setTimeout(fitRing, 150); }
+    view.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', () => copy(b)));
+    view.querySelectorAll('.switch [data-m]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.m !== inv.method) quote(b.dataset.m); }));
+    $('requote')?.addEventListener('click', () => quote(inv.method));
+    if (!conf && !expired) countdown();
+  }
+
+  function drawQr() {
+    const box = $('qr'); if (!box) return;
+    const text = inv.method === 'BTC' ? `bitcoin:${inv.address}?amount=${inv.remaining || inv.pay_amount}` : inv.address;
+    if (window.QRCode) new QRCode(box, { text, width: 184, height: 184, colorDark: '#121110', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+    else box.innerHTML = '<div style="width:184px;height:184px;display:grid;place-items:center;color:#66736D;font-size:13px;text-align:center">Copy the address below</div>';
+  }
+  function fitRing() {
+    const svg = $('timer'); if (!svg) return;
+    const r = svg.getBoundingClientRect(); const w = Math.round(r.width), h = Math.round(r.height);
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.querySelectorAll('rect').forEach((el) => { el.setAttribute('width', w - 4); el.setAttribute('height', h - 4); });
+  }
+  function countdown() {
+    const total = (inv.expires_at - (inv.server_time || Date.now())) || 1;
+    const draw = () => {
+      const left = Math.max(0, inv.expires_at - now()), s = Math.round(left / 1000);
+      const el = $('cd'); if (el) el.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+      const ring = $('ring'); if (ring) { ring.style.strokeDashoffset = String(100 - Math.min(100, (left / Math.max(total, 1)) * 100)); ring.style.stroke = s < 120 ? 'var(--btc)' : ''; }
+      if (s === 0 && inv.status === 'open') { clearInterval(tick); if (demo) set({ ...inv, status: 'expired' }); else load(); }
+    };
+    draw(); tick = setInterval(draw, 1000);
+  }
+  async function copy(btn) {
+    const text = btn.dataset.copy;
+    try { await navigator.clipboard.writeText(text); }
+    catch { const r = document.createRange(); r.selectNodeContents(btn.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    btn.innerHTML = CHECK + 'Copied'; btn.classList.add('ok');
+    setTimeout(() => { btn.innerHTML = ICON_COPY + 'Copy'; btn.classList.remove('ok'); }, 1600);
+  }
+
+  const HERO = `<svg viewBox="0 0 200 190" aria-hidden="true">
+    <ellipse cx="100" cy="184" rx="48" ry="5" fill="currentColor" opacity=".08"/>
+    <g class="fly" style="--dx:-30px;--r:-40deg"><rect x="132" y="40" width="22" height="12" rx="2.5" fill="#26A17B"/><text x="143" y="49.5" font-size="8" font-weight="800" text-anchor="middle" fill="#fff">$</text></g>
+    <g class="fly f2" style="--dx:24px;--r:35deg"><rect x="140" y="44" width="22" height="12" rx="2.5" fill="#1F9D6B"/><text x="151" y="53.5" font-size="8" font-weight="800" text-anchor="middle" fill="#fff">$</text></g>
+    <g class="fly f3" style="--dx:-6px;--r:60deg"><rect x="128" y="46" width="22" height="12" rx="2.5" fill="#2FB487"/><text x="139" y="55.5" font-size="8" font-weight="800" text-anchor="middle" fill="#fff">$</text></g>
+    <path class="spark" d="M46 52l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#F7931A"/><path class="spark s2" d="M166 100l1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5 4.5-1.5z" fill="#26A17B"/><path class="spark s3" d="M36 112l1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5 4.5-1.5z" fill="currentColor"/>
+    <g class="guy">
+      <rect x="83" y="148" width="14" height="32" rx="6" fill="#2C2925"/><rect x="103" y="148" width="14" height="32" rx="6" fill="#2C2925"/>
+      <path d="M78 182c0-5 4-8 10-8h8v10H80a2 2 0 0 1-2-2zM122 182c0-5-4-8-10-8h-8v10h16a2 2 0 0 0 2-2z" fill="#fff" stroke="#121110" stroke-width="2"/>
+      <path d="M72 112c0-12 10-20 28-20s28 8 28 20v38c0 4-3 6-7 6H79c-4 0-7-2-7-6z" fill="#121110"/>
+      <path d="M92 94l8 10 8-10" fill="none" stroke="#3A3732" stroke-width="2"/><path d="M96 104v12M104 104v12" stroke="#FAF9F5" stroke-width="1.6" stroke-linecap="round"/>
+      <g transform="translate(100 130)"><rect x="-9" y="-9" width="18" height="18" rx="5" fill="#FAF9F5"/><path d="M3.3-3.4A5 5 0 1 0 5 0H2.6" fill="none" stroke="#121110" stroke-width="2" stroke-linecap="round"/><circle cx="0.2" cy="0" r="1.1" fill="#26A17B"/></g>
+      <path d="M74 112c-8 6-12 16-10 26 1 4 5 5 8 3l12-10" fill="none" stroke="#121110" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="80" y="118" width="14" height="22" rx="3" fill="#FAF9F5" stroke="#121110" stroke-width="2" transform="rotate(-14 87 129)"/><path d="M83.5 129l2.5 2.5 4.5-5" fill="none" stroke="#26A17B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(-14 87 129)"/>
+      <circle cx="80" cy="137" r="5" fill="#8D5A3B"/>
+      <g class="arm">
+        <path d="M126 106c8-6 14-18 16-34" fill="none" stroke="#121110" stroke-width="11" stroke-linecap="round"/>
+        <g class="fan"><rect class="b1" x="126" y="44" width="16" height="28" rx="3" fill="#1F9D6B" transform="rotate(-24 134 72)"/><rect class="b2" x="134" y="40" width="16" height="30" rx="3" fill="#26A17B"/><rect class="b3" x="142" y="44" width="16" height="28" rx="3" fill="#2FB487" transform="rotate(24 150 72)"/><text x="142" y="60" font-size="11" font-weight="800" text-anchor="middle" fill="#fff">$</text></g>
+        <circle cx="142" cy="70" r="6.5" fill="#8D5A3B"/>
+      </g>
+      <rect x="94" y="80" width="12" height="12" rx="4" fill="#7A4C31"/>
+      <circle cx="100" cy="66" r="21" fill="#8D5A3B"/>
+      <path d="M79 64c0-15 9-23 21-23s21 7 21 20c-6-6-15-7-24-5-6 1-12 4-18 8z" fill="#121110"/>
+      <circle cx="79.5" cy="68" r="3.5" fill="#7A4C31"/>
+      <ellipse class="eye" cx="93" cy="68" rx="2.1" ry="2.6" fill="#121110"/><ellipse class="eye" cx="107" cy="68" rx="2.1" ry="2.6" fill="#121110"/>
+      <path d="M93 76c4 4 10 4 14 0" fill="none" stroke="#121110" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+  </svg>`;
+  function paid() {
+    progress(3);
+    const c = COINS[inv.method] || COINS.USDT_TRC20, who = inv.merchant?.name || 'the seller';
+    const back = inv.redirect_url && /^https?:\/\//i.test(inv.redirect_url) ? inv.redirect_url : null;
+    const onchain = !!inv.txid && !demo ? true : demo;
+    const when = new Date(inv.paid_at || Date.now()).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    view.innerHTML = `<div class="stage done">
+      <div class="burst" id="burst"></div>
+      <div class="hero" style="color:var(--ink)">${reduce ? '' : HERO}<span class="paidchip">✓ Paid</span></div>
+      ${reduce ? '<svg class="check" viewBox="0 0 72 72"><circle cx="36" cy="36" r="33"/><path d="M23 37l9 9 17-19"/></svg>' : ''}
+      <h2>Payment received</h2><p>${esc(who)} has been told. Your order is on its way.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${onchain ? '<span class="vpill"><i>✓</i>Verified on the blockchain</span>' : ''}${inv.merchant?.verified ? `<span class="vpill ink"><i>✓</i>Verified business</span>` : ''}</div>
+      <div class="rows receipt">
+        <div class="row"><span class="k">Paid to</span><span class="v" style="font-family:var(--display);font-weight:700">${esc(who)}</span></div>
+        <div class="row"><span class="k">Amount</span><span class="v">${fmtUsd(inv.amount_usd)}</span></div>
+        <div class="row"><span class="k">Sent</span><span class="v">${esc(inv.received || inv.pay_amount || '')} ${esc(c.unit)}</span></div>
+        <div class="row"><span class="k">Date</span><span class="v">${esc(when)}</span></div>
+        <div class="row"><span class="k">Reference</span><span class="v">${esc(inv.order_id || inv.id)}</span></div>
+        ${inv.tx_url && /^https:\/\//.test(inv.tx_url) ? `<div class="row"><span class="k">Proof</span><a class="v" href="${esc(inv.tx_url)}" target="_blank" rel="noopener noreferrer" style="color:var(--brand-text)">View transaction ↗</a></div>` : ''}
+      </div>
+      <div class="actions"><button class="btn alt" id="print" type="button">Save receipt</button>${back ? `<a class="btn" id="back" href="${esc(back)}" rel="noopener">Continue <span id="rs" class="num" style="opacity:.6"></span></a>` : `<button class="btn" id="closeBtn" type="button">Done</button>`}</div>
+    </div>`;
+    burst();
+    $('print').addEventListener('click', () => window.print());
+    $('closeBtn')?.addEventListener('click', () => { if (window.parent !== window) window.parent.postMessage({ type: 'gatevoo:close', invoice_id: inv.id }, '*'); else window.close(); });
+    if (window.parent !== window) window.parent.postMessage({ type: 'gatevoo:paid', invoice_id: inv.id }, '*');
+    if (back && !demo) { let n = 6; const rs = $('rs'); rs.textContent = n; tick = setInterval(() => { n--; rs.textContent = n; if (n <= 0) { clearInterval(tick); location.href = back; } }, 1000); }
+    if (demo) { const again = document.createElement('button'); again.className = 'link'; again.type = 'button'; again.textContent = 'Replay the preview'; again.onclick = () => { inv = null; useDemo(); }; view.firstElementChild.appendChild(again); }
+  }
+  function burst() {
+    if (reduce) return;
+    const b = $('burst'), colors = ['#121110', '#26A17B', '#F7931A', '#B9B5AC'];
+    for (let i = 0; i < 24; i++) {
+      const p = document.createElement('i'); p.style.background = colors[i % colors.length]; b.appendChild(p);
+      const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 90;
+      p.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px) rotate(${Math.random() * 600}deg)`, opacity: 0 }], { duration: 1100 + Math.random() * 500, delay: 450, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both' });
+    }
+  }
+  function msg(t, text) { progress(0); view.innerHTML = `<div class="stage done"><h2 style="font-size:19px">${esc(t)}</h2><p>${esc(text)}</p></div>`; }
+  function fail(text) { $('mName').textContent = 'Gatevoo'; $('amt').textContent = '—'; msg('Payment unavailable', text); }
+  function flash(text) { const p = document.createElement('p'); p.className = 'err'; p.textContent = text; view.prepend(p); setTimeout(() => p.remove(), 5000); }
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && inv && !demo) load(); });
+  load();
+})();
+</script>
+</body>
+</html>
