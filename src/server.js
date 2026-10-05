@@ -152,6 +152,7 @@ function shell(file, nonce) {
 const page = (file, extra = {}) => (req, res) => res.type('html').set({ 'Cache-Control': 'no-store', ...extra }).send(shell(file, res.locals.nonce));
 app.get('/', page('index.html'));
 app.get('/pay/:id', page('pay.html', { 'X-Robots-Tag': 'noindex' }));
+app.get('/l/:slug', page('link.html', { 'X-Robots-Tag': 'noindex' }));
 app.get(['/admin', '/admin/', '/invite/:token'], page('admin.html', { 'X-Robots-Tag': 'noindex, nofollow' }));
 app.get('/brand', page('brand.html'));
 app.get('/brand/:file', (req, res) => {
@@ -198,6 +199,38 @@ app.post('/api/pay/:id/quote', rateLimit('quote', 30, MIN), wrap(async (req, res
   res.json(inv.publicView(i));
 }));
 
+// ── Shareable links (public) ─────────────────────────────────────────
+const findLink = (slug) => (typeof slug === 'string' && /^[\w-]{10,16}$/.test(slug) ? db().links.find((l) => l.slug === slug) : null);
+function linkPublic(l) {
+  const ws = db().workspaces.find((w) => w.id === l.workspace_id);
+  return { slug: l.slug, active: !!l.active && !!ws && W.methodsFor(ws).length > 0, amount_usd: l.amount_usd, description: l.description, ask: l.ask,
+    merchant: ws ? { name: ws.name, logo: ws.logo || null, color: ws.color || null, verified: !!ws.verified } : null };
+}
+app.get('/api/link/:slug', rateLimit('linkview', 240, MIN), (req, res) => {
+  const l = findLink(req.params.slug);
+  if (!l) return res.status(404).json({ error: 'This payment link does not exist' });
+  res.set('Cache-Control', 'no-store').json(linkPublic(l));
+});
+app.post('/api/link/:slug/start', rateLimit('linkstart', 30, 10 * MIN), (req, res) => {
+  const l = findLink(req.params.slug);
+  if (!l) return res.status(404).json({ error: 'This payment link does not exist' });
+  if (!l.active) return res.status(410).json({ error: 'This payment link is closed. Ask the seller for a new one.' });
+  if (hit('linkstart-all:' + l.id, 2000, 60 * MIN)) return res.status(429).json({ error: 'Too many people at once. Try again in a few minutes.' });
+  const ws = db().workspaces.find((w) => w.id === l.workspace_id);
+  const b = req.body || {};
+  const name = str(b.name, 80), contact = str(b.contact, 120);
+  if (l.ask.name && !name) return res.status(400).json({ error: 'Please enter your name' });
+  if (l.ask.contact && !contact) return res.status(400).json({ error: `Please enter your ${l.ask.contact_label || 'contact'}` });
+  // The same person on the same link with an open checkout gets it back instead of a new one.
+  const now = Date.now(), key = (name + '|' + contact).toLowerCase();
+  const same = key !== '|' && db().invoices.find((i) => i.link_id === l.id && i.link_key === key && (i.status === 'confirming' || (i.status === 'open' && i.expires_at > now)));
+  if (same) return res.json({ id: same.id });
+  const i = inv.createInvoice(ws, { amount_usd: l.amount_usd, description: l.description, customer_name: name || null,
+    order_id: contact ? `${l.ask.contact_label || 'Contact'}: ${contact}` : null, app_id: 'manual', expires_in_min: 60 });
+  i.link_id = l.id; i.link_key = key; l.opened = (l.opened || 0) + 1; store.save();
+  res.status(201).json({ id: i.id });
+});
+
 // ── API for apps (Bearer key; only its SHA-256 is stored) ───────────
 function requireApp(req, res, next) {
   const key = String(req.get('authorization') || '').replace(/^Bearer\s+/i, '').trim();
@@ -212,6 +245,14 @@ function requireApp(req, res, next) {
 }
 app.post('/api/v1/invoices', rateLimit('api', 600, MIN), requireApp, (req, res) => {
   const b = req.body || {};
+  // Same order asked again while its checkout is still open → hand back the SAME checkout.
+  // A customer who opens, leaves and comes back keeps one amount / one address instead of many.
+  if (b.order_id) {
+    const oid = String(b.order_id).slice(0, 120), now = Date.now();
+    const same = db().invoices.find((x) => x.workspace_id === req.ws.id && x.app_id === req.app_.id && x.order_id === oid &&
+      (x.status === 'confirming' || (x.status === 'open' && x.expires_at > now)) && Math.abs(x.amount_usd - Number(b.amount_usd)) < 0.005);
+    if (same) return res.status(200).json({ ...inv.apiView(same), reused: true });
+  }
   const i = inv.createInvoice(req.ws, { ...b, app_id: req.app_.id, created_by: null });
   res.status(201).json(inv.apiView(i));
 });
@@ -445,6 +486,7 @@ app.get(WP + '/overview', workspaceAccess, (req, res) => {
     unmatched: db().unmatched.filter((u) => u.workspace_id === ws.id && !u.resolved),
     apps: db().apps.filter((a) => a.workspace_id === ws.id).map((a) => appView(a, role)),
     webhooks: LEVEL[role] >= 2 ? db().webhooks.filter((j) => j.workspace_id === ws.id).slice(0, 50).map((j) => ({ id: j.id, app_id: j.app_id, invoice_id: j.invoice_id, event: j.event, status: j.status, attempts: j.attempts, last_status: j.last_status, last_error: j.last_error, created_at: j.created_at, delivered_at: j.delivered_at || null })) : [],
+    links: db().links.filter((l) => l.workspace_id === ws.id).slice(-100).reverse().map(linkView),
     events: db().events.filter((e) => e.workspace_id === ws.id || (!e.workspace_id && req.user.platform_owner && ws.primary)).slice(0, 40),
   });
 });
@@ -462,6 +504,30 @@ app.get(WP + '/payments', workspaceAccess, (req, res) => {
   const sum = (a) => Math.round(a.reduce((x, i) => x + i.amount_usd, 0) * 100) / 100;
   res.json({ from, to, invoices: list.map((i) => adminInvoice(i, req.role)),
     totals: { paid: sum(paid), count: paid.length, usdt: sum(paid.filter((i) => i.method === 'USDT_TRC20')), btc: sum(paid.filter((i) => i.method === 'BTC')), all_count: list.length } });
+});
+const linkView = (l) => { const paid = db().invoices.filter((i) => i.link_id === l.id && i.status === 'paid');
+  return { id: l.id, url: `${config.baseUrl}/l/${l.slug}`, amount_usd: l.amount_usd, description: l.description, ask: l.ask, active: !!l.active,
+    opened: l.opened || 0, paid_count: paid.length, paid_usd: Math.round(paid.reduce((x, i) => x + i.amount_usd, 0) * 100) / 100, created_at: l.created_at }; };
+app.post(WP + '/links', workspaceAccess, need('manager'), (req, res) => {
+  const b = req.body || {};
+  const amount = Number(b.amount_usd);
+  if (!Number.isFinite(amount) || amount < 1 || amount > 100000) return res.status(400).json({ error: 'Amount must be between $1 and $100,000' });
+  if (!W.methodsFor(req.ws).length) return res.status(409).json({ error: 'Add a wallet in Settings before creating payments' });
+  if (db().links.filter((l) => l.workspace_id === req.ws.id).length >= 500) return res.status(400).json({ error: 'Too many links. Close some first.' });
+  const labels = { telegram: 'Telegram username', whatsapp: 'WhatsApp number', email: 'Email' };
+  const l = { id: 'lnk_' + sec.token(8), slug: sec.token(9).replace(/[^\w-]/g, 'x').slice(0, 12), workspace_id: req.ws.id, amount_usd: Math.round(amount * 100) / 100,
+    description: str(b.description, 200) || null, ask: { name: b.ask_name !== false, contact: labels[b.ask_contact] ? b.ask_contact : null, contact_label: labels[b.ask_contact] || null },
+    active: true, opened: 0, created_by: req.user.id, created_at: Date.now() };
+  db().links.push(l); store.save();
+  store.log('invoice', `Shareable link for $${l.amount_usd.toFixed(2)} created`, { workspace_id: req.ws.id });
+  res.status(201).json(linkView(l));
+});
+app.patch(WP + '/links/:lid', workspaceAccess, need('manager'), (req, res) => {
+  const l = db().links.find((x) => x.id === req.params.lid && x.workspace_id === req.ws.id);
+  if (!l) return res.status(404).json({ error: 'Link not found' });
+  if ((req.body || {}).active !== undefined) l.active = !!req.body.active;
+  store.save();
+  res.json(linkView(l));
 });
 app.get(WP + '/payments.csv', workspaceAccess, (req, res) => {
   const esc = (v) => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };

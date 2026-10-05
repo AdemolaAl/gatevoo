@@ -166,6 +166,15 @@ function markPaid(inv, { late = false, overpaid = false, keys = [], note = null,
   inv.verified_onchain = keys.length > 0;
   if (note) inv.note = note;
   if (by) inv.marked_by = by;
+  // Paid twice for the same order (e.g. an old checkout and a new one)? Flag it so you can refund.
+  if (inv.order_id) {
+    const twin = store.db.invoices.find((x) => x !== inv && x.workspace_id === inv.workspace_id && x.app_id === inv.app_id && x.order_id === inv.order_id && x.status === 'paid');
+    if (twin) {
+      inv.duplicate_of = twin.id;
+      inv.note = (inv.note ? inv.note + ' · ' : '') + 'Second payment for this order. Refund the customer if they did not mean to pay twice.';
+      store.log('unmatched', `Order ${inv.order_id} was paid twice. Check and refund one.`, { invoice_id: inv.id, workspace_id: inv.workspace_id });
+    }
+  }
   for (const key of keys) if (!store.db.payments.some((p) => p.key === key)) store.db.payments.push({ key, at: Date.now(), invoice_id: inv.id });
   store.log('paid', `$${inv.amount_usd.toFixed(2)} paid${late ? ' (late)' : ''}${overpaid ? ' (overpaid)' : ''}`, { invoice_id: inv.id, workspace_id: inv.workspace_id });
   store.save();

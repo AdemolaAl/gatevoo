@@ -97,6 +97,18 @@ a{color:inherit}
 .search .input{padding-left:36px}
 .seg{display:inline-flex;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:none}
 .seg::-webkit-scrollbar{display:none}
+.who-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.who-pick button{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 13px;display:grid;gap:2px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;color:var(--ink)}
+.who-pick button:active{transform:scale(.98)}
+.who-pick button b{font-size:14px;font-weight:700}.who-pick button small{font-size:12px;color:var(--muted);line-height:1.35}
+.who-pick button.on{border-color:var(--ink);box-shadow:0 0 0 3px rgba(18,17,16,.07)}
+.card.links{padding-bottom:4px;margin-bottom:14px}.card.links .card-h{padding-bottom:10px}
+.lrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 20px;border-top:1px solid var(--line)}
+.lrow .lic{width:36px;height:36px;border-radius:11px;background:var(--sunk);display:grid;place-items:center;color:var(--ink-2)}
+.lrow b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lrow b span{font-weight:500;color:var(--muted)}
+.lrow small{color:var(--muted);font-size:12.5px}.lrow small em{font-style:normal;color:var(--ok);font-weight:600}
+.lrow .lact{display:flex;gap:6px}.lrow.off{opacity:.62}
+@media (max-width:560px){.lrow{grid-template-columns:auto minmax(0,1fr)}.lrow .lact{grid-column:1/-1}}
 .seg button{border:0;background:none;padding:6px 11px;border-radius:7px;font-weight:500;font-size:12.5px;color:var(--muted);white-space:nowrap;transition:color .2s,background .2s}
 .seg button.on{color:var(--ink);background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .field{display:grid;gap:6px}
@@ -1211,7 +1223,7 @@ body{font-size:14.5px;letter-spacing:-.011em;font-feature-settings:"tnum" 1,"ss0
     const csv = `/api/w/${encodeURIComponent(WS)}/payments.csv${range.k !== 'all' && range.from != null ? `?from=${range.from}&to=${range.to}` : ''}`;
     const iso = (t) => t == null ? '' : new Date(t - new Date(t).getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
     const F = [['all', 'All'], ['paid', 'Paid'], ['open', 'Waiting'], ['confirming', 'Confirming'], ['expired', 'Expired']];
-    return `<div class="card rangebar">
+    return `${linksCard()}<div class="card rangebar">
         <div class="rb-top"><div class="rb-chips" id="ranges">${RANGES.map(([k, l]) => `<button type="button" data-r="${k}" class="${range.k === k ? 'on' : ''}">${l}</button>`).join('')}</div>
           <div class="rb-act">${demo ? '' : `<a class="btn ghost sm" href="${csv}">${ic('down', 14, 2)}CSV</a>`}<button class="btn primary sm" id="stmtBtn" type="button">${ic('down', 14, 2)}Statement</button></div></div>
         ${range.k === 'custom' ? `<div class="rb-custom"><label>From<input class="input" type="date" id="rFrom" value="${iso(range.from)}"></label><label>To<input class="input" type="date" id="rTo" value="${iso(range.to != null ? range.to - 1 : null)}"></label><button class="btn primary sm" id="rGo" type="button">Show</button></div>` : ''}
@@ -1286,12 +1298,12 @@ body{font-size:14.5px;letter-spacing:-.011em;font-feature-settings:"tnum" 1,"ss0
   }
 
   // SHARE: present the payment, not a bare address
-  function shareSheet(i) {
+  function shareSheet(i, o = {}) {
     const brand = D.workspace.name;
-    const text = `Hi${i.customer_name ? ' ' + i.customer_name : ''}! Here's your ${brand} invoice for ${usd(i.amount_usd)}${i.description ? ' (' + i.description + ')' : ''}. Pay securely with USDT or Bitcoin:`;
-    openSheet('Send the invoice', `
+    const text = o.text || `Hi${i.customer_name ? ' ' + i.customer_name : ''}! Here's your ${brand} invoice for ${usd(i.amount_usd)}${i.description ? ' (' + i.description + ')' : ''}. Pay securely with USDT or Bitcoin:`;
+    openSheet(o.title || 'Send the invoice', `${o.top || ''}
       <div class="preview-co"><span class="pl">${wlogo(D.workspace)}</span><div style="min-width:0;flex:1"><b style="display:flex;gap:6px;align-items:center">${esc(brand)} ${D.workspace.verified ? '<span class="vtick">' + ic('check', 10, 3.4) + '</span>' : ''}</b><small style="color:var(--muted)">${esc(i.description || 'Invoice')} · ${usd(i.amount_usd)}</small></div></div>
-      <div class="qrbox"><div id="shQr"></div><small style="color:#5E5A50">Customers can scan this from another screen</small></div>
+      <div class="qrbox"><div id="shQr"></div><small style="color:#5E5A50">${o.qrHint || 'Customers can scan this from another screen'}</small></div>
       <div class="field"><label for="shMsg">Message</label><textarea class="input msgbox" id="shMsg">${esc(text)}</textarea></div>
       <div class="share">
         <a id="shWa" target="_blank" rel="noopener"><i style="background:#25D366">${ic('send', 18, 2)}</i>WhatsApp</a>
@@ -1305,13 +1317,38 @@ body{font-size:14.5px;letter-spacing:-.011em;font-feature-settings:"tnum" 1,"ss0
       const m = $('shMsg').value.trim(), full = `${m}\n${i.checkout_url}`;
       $('shWa').href = `https://wa.me/?text=${encodeURIComponent(full)}`;
       $('shTg').href = `https://t.me/share/url?url=${encodeURIComponent(i.checkout_url)}&text=${encodeURIComponent(m)}`;
-      $('shEm').href = `mailto:${encodeURIComponent(i.customer_email || '')}?subject=${encodeURIComponent(`${brand} invoice · ${usd(i.amount_usd)}`)}&body=${encodeURIComponent(full)}`;
+      $('shEm').href = `mailto:${encodeURIComponent(i.customer_email || '')}?subject=${encodeURIComponent(`${brand} · ${usd(i.amount_usd)}${i.description ? ' · ' + i.description : ''}`)}&body=${encodeURIComponent(full)}`;
       $('shCp').onclick = () => copyText(full, 'Message copied');
       if ($('shNative')) $('shNative').onclick = () => navigator.share({ title: `${brand} invoice`, text: m, url: i.checkout_url }).catch(() => {});
     };
     $('shMsg').addEventListener('input', upd); upd();
     if (window.QRCode) new QRCode($('shQr'), { text: i.checkout_url, width: 168, height: 168, colorDark: '#121110', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
   }
+
+  // SHAREABLE LINKS: one link, many people. Each visitor gets their own checkout.
+  function shareLink(l) {
+    shareSheet({ ...l, checkout_url: l.url }, { title: 'Share with everyone',
+      text: `${D.workspace.name}: ${l.description || 'Payment'} · ${usd(l.amount_usd)}. Tap to pay with USDT or Bitcoin. Everyone gets their own checkout:`,
+      qrHint: 'One link for your whole group or channel',
+      top: `<div class="notice" style="margin:0">${ic('info', 18, 2)}<span>Post this anywhere: a channel, a group, your bio. Each person who opens it gets their own checkout${l.ask && l.ask.contact ? ` and gives their ${esc(l.ask.contact_label === "Email" ? "email" : l.ask.contact_label)}` : ''}, so you see exactly who paid.</span></div>` });
+  }
+  function linksCard() {
+    const L = D.links || []; if (!L.length) return '';
+    return `<div class="card links"><div class="card-h"><div><h2>Shareable links</h2><p>One link for many people. Everyone pays on their own checkout.</p></div></div>
+      ${L.map((l) => `<div class="lrow ${l.active ? '' : 'off'}">
+        <span class="lic">${ic('link', 16, 2)}</span>
+        <div style="min-width:0"><b>${usd(l.amount_usd)} <span>${esc(l.description || 'Payment')}</span></b>
+          <small>${l.opened} opened · <em>${l.paid_count} paid</em> · ${usd(l.paid_usd)} in${l.active ? '' : ' · paused'}</small></div>
+        <div class="lact">${l.active ? `<button class="btn ghost sm" data-lshare="${esc(l.id)}" type="button">${ic('send', 14, 2)}Share</button>` : ''}
+          ${can('manager') ? `<button class="btn ghost sm" data-ltog="${esc(l.id)}" type="button">${l.active ? 'Pause' : 'Resume'}</button>` : ''}</div></div>`).join('')}</div>`;
+  }
+  document.addEventListener('click', async (e) => {
+    const sh = e.target.closest('[data-lshare]'), tg = e.target.closest('[data-ltog]');
+    if (!sh && !tg) return;
+    const l = (D.links || []).find((x) => x.id === (sh || tg).dataset[sh ? 'lshare' : 'ltog']); if (!l) return;
+    if (sh) return shareLink(l);
+    try { await wapi(`/links/${encodeURIComponent(l.id)}`, { active: !l.active }, 'PATCH'); toast(l.active ? 'Link paused · new visitors see it closed' : 'Link is live again'); refresh(); } catch (x) { fail(x); }
+  });
 
   // REVIEW
   function review() {
@@ -1741,20 +1778,36 @@ checkout_url = r.json()[<span class="s">"checkout_url"</span>]
     const t = e.target.closest('[data-new]'); if (!t || t.disabled || !D || !can('manager')) return;
     const appOpts = (D.apps || []).map((a) => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
     openSheet('New payment link', `
+      <div class="who-pick" id="nWho" role="radiogroup" aria-label="Who pays">
+        <button type="button" role="radio" aria-checked="true" data-who="one" class="on"><b>One person</b><small>An invoice for one customer</small></button>
+        <button type="button" role="radio" aria-checked="false" data-who="many"><b>Many people</b><small>One link for a group or channel</small></button>
+      </div>
       <div class="field"><label for="nAmt">Amount in US dollars</label><div class="amountbox"><span>$</span><input class="bigin" id="nAmt" type="number" inputmode="decimal" min="1" step="0.01" placeholder="0.00"></div>
         <div class="quick">${[19, 29, 49, 99, 199].map((v) => `<button type="button" data-q="${v}">$${v}</button>`).join('')}</div></div>
       <div class="field"><label for="nDesc">What it's for</label><input class="input" id="nDesc" placeholder="VIP access, 1 month" maxlength="200"><span class="hint">Shown on the invoice.</span></div>
-      <div class="field"><label for="nCust">Customer name <span style="color:var(--faint);font-weight:400">· optional</span></label><input class="input" id="nCust" placeholder="Tunde" maxlength="80"><span class="hint">The checkout greets them by name.</span></div>
-      <div class="field"><label for="nOrd">Reference <span style="color:var(--faint);font-weight:400">· optional</span></label><input class="input" id="nOrd" placeholder="Order #1043 or @username" maxlength="120"></div>
-      <div class="field"><label for="nExp">Link works for</label><select class="input" id="nExp"><option value="30">30 minutes</option><option value="120">2 hours</option><option value="1440">1 day</option><option value="10080">7 days</option></select></div>
-      ${appOpts ? `<div class="field"><label for="nApp">Tell this app when paid</label><select class="input" id="nApp"><option value="manual">None, just me</option>${appOpts}</select></div>` : ''}
+      <div class="field one-only"><label for="nCust">Customer name <span style="color:var(--faint);font-weight:400">· optional</span></label><input class="input" id="nCust" placeholder="Tunde" maxlength="80"><span class="hint">The checkout greets them by name.</span></div>
+      <div class="field one-only"><label for="nOrd">Reference <span style="color:var(--faint);font-weight:400">· optional</span></label><input class="input" id="nOrd" placeholder="Order #1043 or @username" maxlength="120"></div>
+      <div class="field one-only"><label for="nExp">Link works for</label><select class="input" id="nExp"><option value="30">30 minutes</option><option value="120">2 hours</option><option value="1440">1 day</option><option value="10080">7 days</option></select></div>
+      <div class="field many-only" hidden><label for="nAsk">Ask each person for</label><select class="input" id="nAsk"><option value="telegram">Name and Telegram username</option><option value="whatsapp">Name and WhatsApp number</option><option value="email">Name and email</option><option value="">Just their name</option></select><span class="hint">So you know who paid. They see it before paying.</span></div>
+      ${appOpts ? `<div class="field one-only"><label for="nApp">Tell this app when paid</label><select class="input" id="nApp"><option value="manual">None, just me</option>${appOpts}</select></div>` : ''}
       <p class="err" id="nErr" hidden></p>`,
       `<button class="btn primary" id="nGo" type="button" style="flex:1;justify-content:center;padding:12px">${ic('link', 16, 2)}Create invoice</button>`);
     setTimeout(() => $('nAmt').focus(), 320);
     $('shBody').querySelector('.quick').onclick = (ev) => { const b = ev.target.closest('[data-q]'); if (b) { $('nAmt').value = b.dataset.q; $('nDesc').focus(); } };
+    let who = 'one';
+    $('nWho').onclick = (ev) => { const b = ev.target.closest('[data-who]'); if (!b) return; who = b.dataset.who;
+      $('nWho').querySelectorAll('button').forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', String(x === b)); });
+      $('shBody').querySelectorAll('.one-only').forEach((x) => { x.hidden = who !== 'one'; });
+      $('shBody').querySelectorAll('.many-only').forEach((x) => { x.hidden = who !== 'many'; });
+      $('nGo').lastChild.textContent = who === 'one' ? 'Create invoice' : 'Create shareable link'; };
     $('nGo').onclick = async () => {
       const amt = Number($('nAmt').value);
       if (!amt || amt < 1) { $('nErr').textContent = 'Enter an amount of at least $1.'; $('nErr').hidden = false; return; }
+      if (who === 'many') {
+        try { const l = await wapi('/links', { amount_usd: amt, description: $('nDesc').value || null, ask_name: true, ask_contact: $('nAsk').value || null }); refresh(); shareLink(l); }
+        catch (x) { if (x.message !== 'preview') { $('nErr').textContent = x.message; $('nErr').hidden = false; } }
+        return;
+      }
       try {
         const i = await wapi('/invoices', { amount_usd: amt, app_id: $('nApp')?.value || 'manual', description: $('nDesc').value || null, customer_name: $('nCust').value || null, order_id: $('nOrd').value || null, expires_in_min: +$('nExp').value });
         refresh(); shareSheet(i);
@@ -1802,6 +1855,8 @@ checkout_url = r.json()[<span class="s">"checkout_url"</span>]
         totals: { today: sum(paid.filter((i) => i._paid >= start.getTime())), d7: sum(paid.filter((i) => i._paid >= now - 7 * DAY)), d30: sum(paid), all: sum(paid), paid_count: paid.length, open_count: 2, confirming_count: 1,
           usdt_all: sum(paid.filter((i) => i.method === 'USDT_TRC20')), btc_all: sum(paid.filter((i) => i.method === 'BTC')), conversion: Math.round(paid.length / inv.filter((i) => i.method).length * 100) },
         days, invoices: inv,
+        links: scale === 1 ? [{ id: 'lnk_demo1', url: 'https://gatevoo.com/l/Vx8kQ2mZp4Lc', amount_usd: 100, description: 'VIP signals, 30 days', ask: { name: true, contact: 'telegram', contact_label: 'Telegram username' }, active: true, opened: 131, paid_count: 100, paid_usd: 10000, created_at: now - 2 * DAY },
+          { id: 'lnk_demo2', url: 'https://gatevoo.com/l/Qa71nTt0bWe9', amount_usd: 25, description: 'Masterclass replay', ask: { name: true, contact: 'email', contact_label: 'Email' }, active: false, opened: 48, paid_count: 41, paid_usd: 1025, created_at: now - 9 * DAY }] : [],
         unmatched: scale === 1 ? [{ key: 'u1', method: 'USDT_TRC20', amount: '50.00', time: now - 42 * 60e3, reason: 'No checkout with this amount', tx_url: 'https://tronscan.org' }] : [],
         apps: appsD.map((a) => ({ ...a, api_key_hint: 'gv_live_8kQz…x2Lm', webhook_url: `https://api.${a.name.toLowerCase()}.com/gatevoo`, active: true, last_used_at: now - 3600e3 })),
         webhooks: appsD.length ? [{ app_id: appsD[0].id, event: 'invoice.paid', status: 'delivered' }] : [],

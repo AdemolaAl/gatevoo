@@ -61,6 +61,15 @@ Retries: 0s, 30s, 2m, 10m, 30m, 2h, 6h, 24h. Make your handler safe to run twice
 - **Fresh address (Bitcoin "fresh")**: a new address per checkout from your zpub (BIP84, verified against the official test vectors), never reused.
   Part payments show the remaining amount and can be topped up to the same address; within `FRESH_TOLERANCE_PCT` (1%) counts as paid.
 - Late payments are still matched for `LATE_MATCH_HOURS` (24h) after a checkout expires.
+- Unique USDT amounts: cents first (99 per price), then 3 and 4 decimals, so about 11,000 people can be paying the same price at once. Tested with 1,200 simultaneous $100 checkouts.
+
+## One link for many people (shareable links)
+
+An invoice link (`/pay/...`) is for **one** person: if you post it in a group, only the first payer is credited and the rest land in Review.
+For a group, channel or bio, create a **shareable link** in Payments → Payment link → "Many people". It gives `https://gatevoo.com/l/<slug>`.
+Each visitor enters their name (and Telegram, WhatsApp or email if you ask) and gets **their own checkout** with its own amount or Bitcoin address,
+so every payment is matched to a named person. The same person reopening the link gets their open checkout back. Pause a link to close it (new visitors get 410).
+The dashboard shows opened, paid count and total for each link. Rate limits: 30 starts per IP per 10 minutes (mobile networks share IPs), 2,000 per link per hour.
 
 ## Security summary
 

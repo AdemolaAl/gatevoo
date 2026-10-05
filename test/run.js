@@ -68,6 +68,16 @@ async function main() {
     assert.ok(h.startsWith('scrypt$')); assert.ok(sec.verifyPassword('Correct-Horse-9!', h)); assert.ok(!sec.verifyPassword('correct-horse-9!', h));
     assert.ok(sec.passwordProblem('short')); assert.ok(sec.passwordProblem('aaaaaaaaaaaaaaa')); assert.equal(sec.passwordProblem('Correct-Horse-9!'), null);
   });
+  await test('100s of people paying the same $100 at once each get a different USDT amount (1,200 checked)', () => {
+    const { spawnSync } = require('child_process');
+    const tmp = path.join(os.tmpdir(), `gatevoo-many-${process.pid}.json`);
+    const src = `const W=require(${JSON.stringify(path.join(__dirname, '../src/workspaces'))}),store=require(${JSON.stringify(path.join(__dirname, '../src/store'))}),inv=require(${JSON.stringify(path.join(__dirname, '../src/invoices'))});
+      (async()=>{W.bootstrap();const ws=store.db.workspaces[0],seen=new Set();for(let k=0;k<1200;k++){const i=inv.createInvoice(ws,{amount_usd:100});await inv.quote(i,'USDT_TRC20');
+      if(seen.has(i.pay_units)||Math.abs(i.pay_units/1e6-100)>=1)throw new Error('bad '+i.pay_amount);seen.add(i.pay_units);}console.log(seen.size);process.exit(0)})().catch(e=>{console.error(e.message);process.exit(1)})`;
+    const r = spawnSync(process.execPath, ['-e', src], { env: { ...process.env, MOCK_CHAIN: '1', DATA_FILE: tmp, USDT_TRC20_ADDRESS: USDT, OWNER_EMAIL: 'u@zedapex.test', OWNER_PASSWORD: OWNER.password }, encoding: 'utf8' });
+    try { fs.unlinkSync(tmp); } catch {}
+    assert.equal(r.status, 0, r.stderr); assert.equal(r.stdout.trim().split('\n').pop(), '1200');
+  });
   await test('Sealed fields decrypt only with the key and detect tampering', () => {
     const s = sec.seal('secret'); assert.equal(sec.open(s), 'secret');
     const t = s.slice(0, -2) + (s.endsWith('A') ? 'BB' : 'AA');
@@ -164,6 +174,23 @@ async function main() {
       await new Promise((r) => setTimeout(r, 400));
       assert.equal((await anon('GET', `/api/pay/${i1.id}`)).json.status, 'paid');
       assert.ok(hooks.some((h) => h.ok && h.body.data.id === i1.id && h.body.type === 'invoice.paid'));
+    });
+    await test('Customer leaves and comes back: same order gets the SAME checkout, a double payment is flagged', async () => {
+      const key = (await owner('POST', `${wsPath}/apps`, { name: 'Replyvoo' })).json.api_key;
+      const mk = async (amt) => { const r = await fetch(BASE + '/api/v1/invoices', { method: 'POST', headers: { authorization: 'Bearer ' + key, 'content-type': 'application/json' }, body: JSON.stringify({ amount_usd: amt, order_id: 'user_77' }) }); return { status: r.status, json: await r.json() }; };
+      const a = await mk(29), b = await mk(29), c = await mk(29);
+      assert.equal(a.status, 201); assert.equal(b.status, 200); assert.equal(b.json.id, a.json.id); assert.equal(c.json.id, a.json.id);
+      const other = await mk(49); assert.notEqual(other.json.id, a.json.id); // different price = new checkout
+      // pay the first, then cancel-proof check: a second checkout for the same order paid too gets flagged
+      const qa = (await anon('POST', `/api/pay/${a.json.id}/quote`, { method: 'USDT_TRC20' })).json;
+      await owner('POST', '/api/dev/mock-transfer', { method: 'USDT_TRC20', address: USDT, amount: qa.pay_amount });
+      assert.equal((await anon('GET', `/api/pay/${a.json.id}`)).json.status, 'paid');
+      const again = await mk(29); assert.equal(again.status, 201); assert.notEqual(again.json.id, a.json.id); // paid one is not reused
+      const qb = (await anon('POST', `/api/pay/${again.json.id}/quote`, { method: 'USDT_TRC20' })).json;
+      await owner('POST', '/api/dev/mock-transfer', { method: 'USDT_TRC20', address: USDT, amount: qb.pay_amount });
+      const ov = (await owner('GET', `${wsPath}/overview`)).json;
+      const dup = ov.invoices.find((i) => i.id === again.json.id);
+      assert.equal(dup.status, 'paid'); assert.equal(dup.duplicate_of, a.json.id); assert.match(dup.note, /Refund/);
     });
     await test('Overpay up to 10% is credited; a 50% overpay goes to Review', async () => {
       const a = (await owner('POST', `${wsPath}/invoices`, { amount_usd: 20 })).json;
@@ -396,6 +423,30 @@ async function main() {
       assert.equal(csv.trim().split('\n').length, 1);
       assert.equal((await viewer('GET', `${wsPath}/payments?from=${now - day}&to=${now + day}`)).status, 200);
       assert.equal((await anon('GET', `${wsPath}/payments?from=${now - day}&to=${now + day}`)).status, 401);
+    });
+    await test('Shareable link: many people, one link — each gets their own checkout and is named', async () => {
+      const L = await owner('POST', `${wsPath}/links`, { amount_usd: 100, description: 'VIP access', ask_contact: 'telegram' });
+      assert.equal(L.status, 201); const slug = L.json.url.split('/l/')[1]; assert.match(slug, /^[\w-]{10,16}$/);
+      assert.equal((await viewer('POST', `${wsPath}/links`, { amount_usd: 5 })).status, 403);
+      const pub = await anon('GET', `/api/link/${slug}`); assert.equal(pub.json.active, true); assert.equal(pub.json.amount_usd, 100);
+      assert.equal((await anon('POST', `/api/link/${slug}/start`, { name: 'Ada' })).status, 400); // telegram required
+      const a = await anon('POST', `/api/link/${slug}/start`, { name: 'Ada', contact: '@ada' });
+      const b = await anon('POST', `/api/link/${slug}/start`, { name: 'Bayo', contact: '@bayo' });
+      const a2 = await anon('POST', `/api/link/${slug}/start`, { name: 'ada', contact: '@ADA' });
+      assert.equal(a.status, 201); assert.equal(b.status, 201); assert.notEqual(a.json.id, b.json.id); assert.equal(a2.json.id, a.json.id);
+      const qa = (await anon('POST', `/api/pay/${a.json.id}/quote`, { method: 'USDT_TRC20' })).json;
+      const qb = (await anon('POST', `/api/pay/${b.json.id}/quote`, { method: 'USDT_TRC20' })).json;
+      assert.notEqual(qa.pay_amount, qb.pay_amount);
+      await owner('POST', '/api/dev/mock-transfer', { method: 'USDT_TRC20', address: USDT, amount: qb.pay_amount });
+      assert.equal((await anon('GET', `/api/pay/${b.json.id}`)).json.status, 'paid');
+      assert.equal((await anon('GET', `/api/pay/${a.json.id}`)).json.status, 'open'); // Ada's checkout is untouched
+      const ov = (await owner('GET', `${wsPath}/overview`)).json;
+      const row = ov.links.find((x) => x.id === L.json.id); assert.equal(row.opened, 2); assert.equal(row.paid_count, 1); assert.equal(row.paid_usd, 100);
+      const paidRow = ov.invoices.find((i) => i.id === b.json.id); assert.equal(paidRow.customer_name, 'Bayo'); assert.match(paidRow.order_id, /@bayo/);
+      assert.equal((await owner('PATCH', `${wsPath}/links/${L.json.id}`, { active: false })).json.active, false);
+      assert.equal((await anon('POST', `/api/link/${slug}/start`, { name: 'Chi', contact: '@chi' })).status, 410);
+      assert.equal((await anon('GET', '/api/link/nonexistent12')).status, 404);
+      assert.equal((await merchant('PATCH', `${mPath}/links/${L.json.id}`, { active: true })).status, 404); // other businesses can't touch it
     });
     await test('CSV exports neutralise spreadsheet formulas', async () => {
       const x = (await merchant('POST', `${mPath}/invoices`, { amount_usd: 3, description: '=HYPERLINK("http://evil")' })).json;

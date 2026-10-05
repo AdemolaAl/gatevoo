@@ -112,7 +112,9 @@ async function deliver(job) {
     }, body);
     job.last_status = status;
     if (status >= 200 && status < 300) { job.status = 'delivered'; job.delivered_at = Date.now(); job.last_error = null; return; }
-    job.last_error = `Your app answered ${status}`;
+    job.last_error = status === 404 ? 'Your app answered 404: nothing is listening at this webhook address. Check the exact URL (for Joinvoo it ends in /webhooks/gatevoo/gatevoo) and that the newest version of the app is deployed.'
+      : status === 401 ? 'Your app answered 401: the webhook secret in your app does not match this app\'s secret in Gatevoo. Copy it again (Connect → app → New secret).'
+      : `Your app answered ${status}`;
   } catch (err) {
     job.last_error = err.message;
   }

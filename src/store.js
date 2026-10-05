@@ -16,6 +16,7 @@ const empty = () => ({
   payments: [],    // on-chain transfers already processed (never reused)
   unmatched: [],   // transfers we could not tie to exactly one invoice
   waitlist: [],
+  links: [],       // shareable links: one link, a new checkout for every person who opens it
   apps: [],        // Joinvoo, Replyvoo... each with an API key + webhook, inside a workspace
   webhooks: [],    // delivery queue + log
   events: [],      // short activity log per workspace

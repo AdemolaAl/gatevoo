@@ -92,10 +92,16 @@ async function quote(inv, methodId) {
         (isLive(o, now) || o.status === 'confirming' || (o.status === 'expired' && now - o.expires_at < window)))
       .map((o) => String(o.pay_units)));
     if (methodId === 'USDT_TRC20') {
-      const cents = Math.round(inv.amount_usd * 100);
-      const k = shuffle([...Array(99)].map((_, i) => i + 1)).find((o) => !taken.has(String((cents + o) * 10000)));
-      if (!k) throw httpError(503, 'Too many open payments at this price. Try again in a few minutes.');
-      units = (cents + k) * 10000;
+      // Unique amount per open checkout. Cents first (49.13), then 3 decimals (49.137),
+      // then 4 (49.1372): about 10,000 people can pay the same price at the same time.
+      const baseU = Math.round(inv.amount_usd * 100) * 10000;
+      const tiers = [[99, 10000], [999, 1000], [9999, 100]];
+      units = null;
+      for (const [n, step] of tiers) {
+        const k = shuffle([...Array(n)].map((_, i) => i + 1)).find((o) => o * step < 1e6 && !taken.has(String(baseU + o * step)));
+        if (k) { units = baseU + k * step; break; }
+      }
+      if (units == null) throw httpError(503, 'Too many open payments at this price. Try again in a few minutes.');
     } else {
       const base = Math.ceil((inv.amount_usd / rate) * 1e8);
       const k = shuffle([...Array(999)].map((_, i) => i + 1)).find((o) => !taken.has(String(base + o)));
@@ -106,7 +112,7 @@ async function quote(inv, methodId) {
   const dec = config.methods[methodId].decimals;
   Object.assign(inv, {
     method: methodId, mode, pay_units: units, address, addr_index, rate_usd: rate,
-    pay_amount: methodId === 'USDT_TRC20' ? formatUnits(units, 6).replace(/0{4}$/, '') : trimZeros(formatUnits(units, dec)),
+    pay_amount: methodId === 'USDT_TRC20' ? trimZeros(formatUnits(units, 6)) : trimZeros(formatUnits(units, dec)),
     quoted_at: now, expires_at: now + inv.ttl_min * MIN, status: 'open',
   });
   store.save();
@@ -145,7 +151,7 @@ function apiView(inv) {
     order_id: inv.order_id, description: inv.description, customer_name: inv.customer_name, customer_email: inv.customer_email, metadata: inv.metadata,
     method: inv.method, mode: inv.mode, pay_amount: inv.pay_amount, address: inv.address,
     received: inv.received_units != null && m ? trimZeros(formatUnits(inv.received_units, m.decimals)) : null,
-    txid: inv.txid, tx_url: inv.txid && m ? m.explorer(inv.txid) : null, late: inv.late, overpaid: !!inv.overpaid,
+    txid: inv.txid, tx_url: inv.txid && m ? m.explorer(inv.txid) : null, late: inv.late, overpaid: !!inv.overpaid, duplicate_of: inv.duplicate_of || null,
     created_at: new Date(inv.created_at).toISOString(), expires_at: new Date(inv.expires_at).toISOString(),
     paid_at: inv.paid_at ? new Date(inv.paid_at).toISOString() : null,
     checkout_url: `${config.baseUrl}/pay/${inv.id}`,
